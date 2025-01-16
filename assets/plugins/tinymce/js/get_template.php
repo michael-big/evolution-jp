@@ -10,7 +10,7 @@
 // * xxx
 
 // Config options
-$templates_to_ignore = array();    // Template IDs to ignore from the link list
+$templates_to_ignore = [];    // Template IDs to ignore from the link list
 $include_page_ids = false;
 $charset = 'UTF-8';
 $sortby = 'menuindex'; // Could be menuindex or menutitle
@@ -41,17 +41,21 @@ $chunks = $modx->config['mce_template_chunks'];
 
 $output = false;
 
-if (isset($_GET['docid']) && preg_match('@^[0-9]+$@', $_GET['docid'])) {
-    $doc = $modx->getDocument($_GET['docid']);
-    if ($doc) $output = $doc['content'];
-} elseif (isset($_GET['chunk']) && preg_match('@^[0-9]+$@', $_GET['chunk'])) {
-    $tbl_site_htmlsnippets = evo()->getFullTableName('site_htmlsnippets');
-    $cid = $_GET['chunk'];
-    $rs = db()->select('snippet', $tbl_site_htmlsnippets, "`id`='{$cid}' AND published=1");
-    $content = db()->getValue($rs);
-    if ($content) $output = $content;
+if ($docid = getv('docid')) {
+    if (preg_match('@^[0-9]+$@', $docid)) {
+        $doc = $modx->getDocument($docid);
+        if ($doc) $output = $doc['content'];
+    }
+} elseif ($chunk = getv('chunk')) {
+    if (preg_match('@^[0-9]+$@', $chunk)) {
+        $tbl_site_htmlsnippets = evo()->getFullTableName('site_htmlsnippets');
+        $cid = $chunk;
+        $rs = db()->select('snippet', $tbl_site_htmlsnippets, "`id`='{$cid}' AND published=1");
+        $content = db()->getValue($rs);
+        if ($content) $output = $content;
+    }
 } else {
-    $list = array();
+    $list = [];
     $tpl = "['[+title+]', '[+site_url+]assets/plugins/tinymce/js/get_template.php?[+target+]', '[+description+]']";
     $ph['site_url'] = MODX_SITE_URL;
 

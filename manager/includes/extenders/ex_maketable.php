@@ -185,10 +185,11 @@ class MakeTable
                         isset($fieldHeadersArray[$key]) ? $fieldHeadersArray[$key] : $key
                     );
                 }
+                $fieldText = $fieldValue[$this->actionField] ?? '';
                 $_[] = sprintf(
                     '<td>%s</td>',
                     $this->createCellText(
-                        $fieldValue[$this->actionField],
+                        $fieldText,
                         $value
                     )
                 );
@@ -347,11 +348,7 @@ EOT;
     {
         global $_lang, $modx;
 
-        if (!isset($_GET['page']) || !preg_match('@^[1-9][0-9]*$@', $_GET['page'])) {
-            $currentPage = 1;
-        } else {
-            $currentPage = $_GET['page'];
-        }
+        $currentPage = getv('page') && preg_match('@^[1-9][0-9]*$@', getv('page')) ? getv('page') : 1;
 
         $totalPages = ceil($totalRecords / $this->pageLimit);
         if ($totalPages < 2) {
@@ -403,18 +400,18 @@ EOT;
      * @param $currentPage Indicates if the link is to the current page.
      * @param $qs And optional query string to be appended to the link.
      */
-    function createPageLink($path = '', $pageNum, $displayText, $currentPage = false, $qs = '')
+    function createPageLink($path = '', $pageNum=0, $displayText='', $currentPage = false, $qs = '')
     {
         global $modx;
 
         if (empty($path)) {
             $p = [];
             $p[] = "page={$pageNum}";
-            if (!empty($_GET['orderby'])) {
-                $p[] = 'orderby=' . $_GET['orderby'];
+            if (getv('orderby')) {
+                $p[] = 'orderby=' . getv('orderby');
             }
-            if (!empty($_GET['orderdir'])) {
-                $p[] = 'orderdir=' . $_GET['orderdir'];
+            if (getv('orderdir')) {
+                $p[] = 'orderdir=' . getv('orderdir');
             }
             if (!empty($qs)) {
                 $p[] = trim($qs, '?&');
@@ -465,7 +462,7 @@ EOT;
      */
     function handlePaging()
     {
-        $offset = (preg_match('@^[1-9][0-9]*$@', $_GET['page'])) ? $_GET['page'] - 1 : 0;
+        $offset = (preg_match('@^[1-9][0-9]*$@', getv('page'))) ? getv('page') - 1 : 0;
         return sprintf(' LIMIT %s,%s', $offset * $this->pageLimit, $this->pageLimit);
     }
 

@@ -18,7 +18,9 @@
  * Grant French (grant@mcpuk.net)
  */
 
-class DeleteFile
+require_once 'Base.php';
+
+class DeleteFile extends Base
 {
     public $fckphp_config;
     public $type;
@@ -41,7 +43,7 @@ class DeleteFile
             rtrim($this->fckphp_config['basedir'], '/'),
             trim($this->actual_cwd, '/') ? trim($this->actual_cwd, '/') : ''
         );
-        $this->filename = str_replace(array('../', '/'), '', unescape($_GET['FileName']));
+        $this->filename = str_replace(array('../', '/'), '', unescape(getv('FileName')));
     }
 
     function run()
@@ -56,8 +58,8 @@ class DeleteFile
         header('content-type: text/xml');
         echo '<?xml version="1.0" encoding="utf-8" ?>' . "\n";
         ?>
-        <Connector command="DeleteFile" resourceType="<?php echo $this->type; ?>">
-            <CurrentFolder path="<?php echo $this->raw_cwd; ?>" url="<?php echo $this->actual_cwd; ?>"/>
+        <Connector command="DeleteFile" resourceType="<?= $this->type ?>">
+            <CurrentFolder path="<?= $this->raw_cwd ?>" url="<?= $this->actual_cwd ?>"/>
             <?php
             if ($result1 && $result2) {
                 $err_no = 0;
@@ -65,7 +67,7 @@ class DeleteFile
                 $err_no = 302;
             }
             ?>
-            <Error number="<?php echo '' . $err_no; ?>"/>
+            <Error number="<?= '' . $err_no ?>"/>
         </Connector>
         <?php
     }

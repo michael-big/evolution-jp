@@ -50,9 +50,9 @@ if (evo()->config['use_udperms'] == 1 && $current_parent != $new_parent) {
         include_once(MODX_MANAGER_PATH . 'actions/header.inc.php');
         ?>
         <script type="text/javascript">parent.tree.ca = '';</script>
-        <div class="sectionHeader"><?php echo lang('access_permissions'); ?></div>
+        <div class="sectionHeader"><?= lang('access_permissions') ?></div>
         <div class="sectionBody">
-            <p><?php echo lang('access_permission_parent_denied'); ?></p>
+            <p><?= lang('access_permission_parent_denied') ?></p>
         </div>
         <?php
         include_once(MODX_MANAGER_PATH . 'actions/footer.inc.php');
@@ -172,7 +172,7 @@ function alertAndQuit($string, $docid)
 
 function allChildren($docid)
 {
-    $children = array();
+    $children = [];
     $rs = db()->select('id', '[+prefix+]site_content', "parent='{$docid}'");
     if (!$rs) {
         exit("An error occured while attempting to find all of the resource's children.");

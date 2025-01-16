@@ -19,7 +19,8 @@
  * Grant French (grant@mcpuk.net)
  */
 
-class GetFoldersAndFiles
+require_once 'Base.php';
+class GetFoldersAndFiles extends Base
 {
     public $fckphp_config;
     public $type;
@@ -68,17 +69,17 @@ class GetFoldersAndFiles
         <!ATTLIST File size CDATA "0">
         ] >
 
-    <Connector command="GetFoldersAndFiles" resourceType="<?php echo $this->type; ?>">
-        <CurrentFolder path="<?php echo $this->raw_cwd; ?>"
-                       url="<?php echo $this->fckphp_config['urlprefix'] . $this->actual_cwd; ?>"/>
+    <Connector command="GetFoldersAndFiles" resourceType="<?= $this->type ?>">
+        <CurrentFolder path="<?= $this->raw_cwd ?>"
+                       url="<?= $this->fckphp_config['urlprefix'] . $this->actual_cwd ?>"/>
         <Folders>
         <?php
-        $files = array();
+        $files = [];
         if (opendir($this->real_cwd)) {
             /**
              * Initiate the array to store the foldernames
              */
-            $folders_array = array();
+            $folders_array = [];
             $filenames = scandir($this->real_cwd);
             if ($filenames) {
                 foreach ($filenames as $filename) {

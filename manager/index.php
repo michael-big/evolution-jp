@@ -4,8 +4,10 @@ if (!isset($_SERVER['REQUEST_TIME_FLOAT'])) {
 }
 $mstart = memory_get_usage();
 
-define('IN_MANAGER_MODE',
-    'true');  // we use this to make sure files are accessed through the manager instead of seperately.
+define(
+    'IN_MANAGER_MODE',
+    'true'
+);  // we use this to make sure files are accessed through the manager instead of seperately.
 define('MODX_MANAGER_PATH', str_replace('\\', '/', __DIR__) . '/');
 
 include_once('../index.php');
@@ -53,7 +55,7 @@ $modx->getSettings();
 extract($modx->config);
 
 if (postv('updateMsgCount') && evo()->hasPermission('messages')) {
-    $modx->manager->getMessageCount();
+    manager()->getMessageCount();
 }
 
 // include_once the language file
@@ -62,7 +64,7 @@ $modx->loadLexicon('manager');
 // send the charset header
 header(sprintf('Content-Type: text/html; charset=%s', config('modx_charset', 'utf-8')));
 
-$modx->manager->action = anyv('a', 1);
+manager()->action = anyv('a', 1);
 
 // accesscontrol.php checks to see if the user is logged in. If not, a log in form is shown
 include_once(MODX_CORE_PATH . 'accesscontrol.inc.php');
@@ -72,7 +74,7 @@ if (!isset($_SESSION['mgrValidated'])) {
     exit('Not Logged In!');
 }
 
-switch ($modx->manager->action) {
+switch (manager()->action) {
     case 5:
     case 20:
     case 24:
@@ -87,7 +89,7 @@ switch ($modx->manager->action) {
         if (is_file(MODX_CACHE_PATH . 'rolePublishing.idx.php')) {
             $content = file_get_contents(MODX_CACHE_PATH . 'rolePublishing.idx.php');
             $role = unserialize($content);
-            if ($_SESSION['mgrLastlogin'] < $role[$_SESSION['mgrRole']]) {
+            if (sessionv('mgrLastlogin', 0) < $role[sessionv('mgrRole', 0)]) {
                 @session_destroy();
                 session_unset();
                 header("Location: " . MODX_SITE_URL . "manager/");
@@ -113,7 +115,7 @@ $e = new errorHandler;
 
 // Initialize System Alert Message Queque
 if (!isset($_SESSION['SystemAlertMsgQueque'])) {
-    $_SESSION['SystemAlertMsgQueque'] = array();
+    $_SESSION['SystemAlertMsgQueque'] = [];
 }
 $modx->SystemAlertMsgQueque = &$_SESSION['SystemAlertMsgQueque'];
 
@@ -124,30 +126,26 @@ if (!evo()->input_any('a') && !alert()->hasError() && !isset($_POST['updateMsgCo
 }
 
 // OK, let's retrieve the action directive from the request
-if (isset($_GET['a']) && isset($_POST['a'])) {
+if (getv('a') && postv('a')) {
     alert()->setError(100);
     alert()->dumpError();
 } else {
-    if (isset($_REQUEST['a'])) {
-        $modx->manager->action = (int)$_REQUEST['a'];
-    } else {
-        $modx->manager->action = '';
-    }
+    $modx->manager->action = (int)anyv('a') ?: '';
 }
 
 // attempt to foil some simple types of CSRF attacks
-$modx->manager->validate_referer($modx->config['validate_referer']);
+manager()->validate_referer($modx->config('validate_referer'));
 
-$modx->manager->setView($modx->manager->action);
+manager()->setView(manager()->action);
 
-if (isset($_POST['stay']) && $_POST['stay'] !== 'new') {
-    $_SESSION['saveAfter'] = $_POST['stay'];
+if (postv('stay') && postv('stay') !== 'new') {
+    $_SESSION['saveAfter'] = postv('stay');
 }
 
 // invoke OnManagerPageInit event
 // If you would like to output $evtOutOnMPI , set $action to 999 or 998 in Plugin.
 //   ex)$modx->event->setGlobalVariable('action',999);
-$tmp = array("action" => $modx->manager->action);
+$tmp = array("action" => manager()->action);
 $evtOutOnMPI = evo()->invokeEvent("OnManagerPageInit", $tmp);
 
 $action_path = MODX_MANAGER_PATH . 'actions/';
@@ -155,7 +153,7 @@ $prc_path = MODX_MANAGER_PATH . 'processors/';
 
 // Now we decide what to do according to the action request. This is a BIG list :)
 
-if (in_array($modx->manager->action, array(
+if (in_array(manager()->action, array(
     2,
     3,
     120,
@@ -217,8 +215,8 @@ if (in_array($modx->manager->action, array(
     include_once($action_path . 'header.inc.php');
 }
 
-switch ($modx->manager->action) {
-    case 1 : //frame management - show the requested frame
+switch (manager()->action) {
+    case 1: //frame management - show the requested frame
         // get the requested frame
         if (isset($_REQUEST['f'])) {
             $frame = $_REQUEST['f'];
@@ -311,7 +309,7 @@ switch ($modx->manager->action) {
     case 33: // get the delete user page
         include_once($prc_path . 'permission/delete_user.processor.php');
         break;
-// role management
+        // role management
     case 38: // get the new role page
     case 35: // get the edit role page
         include_once($action_path . 'permission/mutate_role.dynamic.php');
@@ -422,15 +420,15 @@ switch ($modx->manager->action) {
     case 130: // delete draft action
         include_once($prc_path . 'document/delete_draft_content.processor.php');
         break;
-// view phpinfo
+        // view phpinfo
     case 200: // show phpInfo
         include_once($action_path . 'report/phpinfo.static.php');
         break;
-// errorpage
+        // errorpage
     case 29: // get the error page
         include_once($action_path . 'error_dialog.static.php');
         break;
-// file manager
+        // file manager
     case 31: // get the page to manage files
         include_once($action_path . 'element/files.dynamic.php');
         break;
@@ -529,7 +527,7 @@ switch ($modx->manager->action) {
     case 9: // get the help page
         include_once($action_path . 'tool/help.static.php');
         break;
-    // Template Variables - Based on Apodigm's Docvars
+        // Template Variables - Based on Apodigm's Docvars
     case 300: // get the new document variable action
     case 301: // get the edit document variable action
         include_once($action_path . 'element/mutate_tmplvars.dynamic.php');
@@ -565,7 +563,7 @@ switch ($modx->manager->action) {
             echo implode('', $evtOutOnMPI);
         }
         break;
-    default : // default action: show not implemented message
+    default: // default action: show not implemented message
         // say that what was requested doesn't do anything yet
         include_once($action_path . 'header.inc.php');
         echo "
@@ -579,12 +577,12 @@ switch ($modx->manager->action) {
         include_once($action_path . 'footer.inc.php');
 }
 
-if (in_array($modx->manager->action, array(2, 3, 120, 4, 72, 27, 132, 131, 51, 133, 7, 87, 88, 11, 12, 74, 28, 38, 35, 16, 19, 117, 22, 23, 78, 77, 18, 26, 106, 107, 108, 113, 100, 101, 102, 127, 200, 31, 40, 91, 17, 53, 13, 10, 70, 71, 59, 75, 99, 86, 76, 83, 95, 9, 300, 301, 114, 115, 998))) {
+if (in_array(manager()->action, array(2, 3, 120, 4, 72, 27, 132, 131, 51, 133, 7, 87, 88, 11, 12, 74, 28, 38, 35, 16, 19, 117, 22, 23, 78, 77, 18, 26, 106, 107, 108, 113, 100, 101, 102, 127, 200, 31, 40, 91, 17, 53, 13, 10, 70, 71, 59, 75, 99, 86, 76, 83, 95, 9, 300, 301, 114, 115, 998))) {
     include_once($action_path . 'footer.inc.php');
 }
 
 // log action, unless it's a frame request
-switch ($modx->manager->action) {
+switch (manager()->action) {
     case 1:
     case 7:
     case 2:

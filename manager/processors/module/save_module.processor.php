@@ -35,11 +35,11 @@ if (!postv('newcategory') && postv('categoryid') > 0) {
 } elseif (!postv('newcategory') && postv('categoryid') <= 0) {
     $category = 0;
 } else {
-    $catCheck = $modx->manager->checkCategory(db()->escape(postv('newcategory')));
+    $catCheck = manager()->checkCategory(db()->escape(postv('newcategory')));
     if ($catCheck) {
         $category = $catCheck;
     } else {
-        $category = $modx->manager->newCategory(postv('newcategory'));
+        $category = manager()->newCategory(postv('newcategory'));
     }
 }
 
@@ -63,7 +63,7 @@ switch (postv('mode')) {
             $modx->event->alert(sprintf($_lang['duplicate_name_found_module'], $name));
 
             // prepare a few variables prior to redisplaying form...
-            $content = array();
+            $content = [];
             $_REQUEST['a'] = '107';
             $_GET['a'] = '107';
             $_GET['stay'] = postv('stay');

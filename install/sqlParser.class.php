@@ -24,9 +24,9 @@ class SqlParser
             ? MODX_BASE_PATH . 'install/sql/' . $filename
             : MODX_BASE_PATH . $filename;
         if (!is_file($path)) {
-            $this->mysqlErrors[] = array(
+            $this->mysqlErrors[] = [
                 'error' => sprintf("File '%s' not found", $path)
-            );
+            ];
             $this->installFailed = true;
             return false;
         }
@@ -44,27 +44,25 @@ class SqlParser
             exit('DBのバージョンが古いためインストールできません。');
         }
 
+        $tableOption = vsprintf(
+            'CHARSET=%s COLLATE %s',
+            [$this->connection_charset, $this->connection_collation]
+        );
         $sql_array = preg_split(
             '@;[ \t]*\n@',
             evo()->parseText(
-                str_replace(
-                    'ENGINE=MyISAM',
-                    sprintf(
-                        'ENGINE=MyISAM DEFAULT CHARSET=%s COLLATE %s'
-                        , $this->connection_charset
-                        , $this->connection_collation
-                    ),
-                    $idata
-                ),
-                array(
+                str_replace('{TABLE_OPTION}', $tableOption, $idata),
+                [
                     'PREFIX' => $this->prefix,
                     'ADMINNAME' => $this->adminname,
                     'ADMINPASS' => md5($this->adminpass),
                     'ADMINEMAIL' => $this->adminemail,
-                    'ADMINFULLNAME' => substr($this->adminemail, 0, strpos($this->adminemail, '@')),
+                    'ADMINFULLNAME' => substr(
+                        $this->adminemail, 0, strpos($this->adminemail, '@')
+                    ),
                     'MANAGERLANGUAGE' => $this->managerlanguage,
                     'DATE_NOW' => time()
-                ),
+                ],
                 '{',
                 '}',
                 false
@@ -80,11 +78,11 @@ class SqlParser
             if (!$error_no) {
                 continue;
             }
-            if (!in_array($error_no, array(1060, 1061, 1091, 1054, 1064))) {
-                $this->mysqlErrors[] = array(
+            if (!in_array($error_no, [1060, 1061, 1091, 1054, 1064])) {
+                $this->mysqlErrors[] = [
                     'error' => db()->getLastError(),
                     'sql' => $sql
-                );
+                ];
                 $this->installFailed = true;
             }
         }

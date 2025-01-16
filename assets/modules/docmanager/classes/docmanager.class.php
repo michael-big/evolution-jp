@@ -2,9 +2,10 @@
 
 class DocManager
 {
-    public $lang = array();
+    public $lang = [];
     public $theme = '';
-    private $fileRegister = array();
+    public $ph = [];
+    private $fileRegister = [];
 
     function __construct()
     {
@@ -12,8 +13,8 @@ class DocManager
 
     function getLang()
     {
-        $_lang = array();
-        $ph = array();
+        $_lang = [];
+        $ph = [];
         $managerLanguage = evo()->config['manager_language'];
 
         $userId = evo()->getLoginUserID();
@@ -83,7 +84,7 @@ class DocManager
         return $contents;
     }
 
-    function parseTemplate($tpl, $ph = array())
+    function parseTemplate($tpl, $ph = [])
     {
         global $modx;
         if (isset($this->fileRegister[$tpl])) {
@@ -96,7 +97,7 @@ class DocManager
                 if (!isset($modx->config['mgr_date_picker_path'])) {
                     $modx->config['mgr_date_picker_path'] = 'media/script/air-datepicker/datepicker.inc.php';
                 }
-                $dp = $modx->manager->loadDatePicker($modx->config['mgr_date_picker_path']);
+                $dp = manager()->loadDatePicker($modx->config['mgr_date_picker_path']);
                 $tpl = str_replace('</body>', $dp . '</body>', $tpl);
             }
             $ph['settings_version'] = $modx->config['settings_version'];

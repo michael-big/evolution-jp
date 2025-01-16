@@ -10,7 +10,7 @@
 class ditto
 {
     public $template, $resource, $format, $debug, $advSort, $sqlOrderBy, $customReset, $fields, $constantFields, $prefetch, $sortOrder, $customPlaceholdersMap;
-    public $tmpCache = array();
+    public $tmpCache = [];
 
     function __construct($format, $language, $debug)
     {
@@ -18,10 +18,10 @@ class ditto
         $GLOBALS['ditto_lang'] = $language;
         $this->prefetch = false;
         $this->advSort = false;
-        $this->sqlOrderBy = array();
-        $this->customReset = array();
+        $this->sqlOrderBy = [];
+        $this->customReset = [];
         $this->constantFields[] = array('db', 'tv');
-        $this->constantFields['db'] = array(
+        $this->constantFields['db'] = [
             'id', 'type', 'contentType', 'pagetitle', 'longtitle',
             'description', 'alias', 'link_attributes', 'published',
             'pub_date', 'unpub_date', 'parent', 'isfolder',
@@ -31,17 +31,18 @@ class ditto
             'deletedon', 'deletedby', 'publishedon', 'publishedby',
             'menutitle', 'donthit', 'haskeywords', 'hasmetatags',
             'privateweb', 'privatemgr', 'content_dispo', 'hidemenu'
-        );
+        ];
         $this->constantFields['tv'] = $this->getTVList();
         $GLOBALS['ditto_constantFields'] = $this->constantFields;
-        $this->fields = array(
-            'display' => array(),
-            'backend' => array(
-                'tv' => array(),
-                'db' => array('id', 'published'))
-        );
+        $this->fields = [
+            'display' => [],
+            'backend' => [
+                'tv' => [],
+                'db' => ['id', 'published']
+            ]
+        ];
         $this->sortOrder = false;
-        $this->customPlaceholdersMap = array();
+        $this->customPlaceholdersMap = [];
         $this->template = new template();
 
         if ($debug !== null) {
@@ -184,7 +185,7 @@ class ditto
     function parseOrderBy($orderBy, $randomize)
     {
         if ($randomize != 0) return false;
-        $orderBy['sql'] = array();
+        $orderBy['sql'] = [];
 
         foreach ($orderBy['parsed'] as $item) {
             $this->addFields($item[0], 'backend');
@@ -251,9 +252,9 @@ class ditto
     // Split up the filters into an array and add the required fields to the fields array
     // ---------------------------------------------------
 
-    public function parseFilters($filter_params = false, $cFilters = array(), $pFilters = array(), $globalDelimiter, $localDelimiter)
+    public function parseFilters($filter_params = false, $cFilters = [], $pFilters = [], $globalDelimiter = ',', $localDelimiter = ':')
     {
-        $parsedFilters = array('basic' => array(), 'custom' => array());
+        $parsedFilters = ['basic' => [], 'custom' => []];
         $filters = explode($globalDelimiter, $filter_params);
         if ($filter_params) {
             foreach ($filters as $filter) {
@@ -292,7 +293,7 @@ class ditto
     // Render the document output
     // ---------------------------------------------------
 
-    function render($resource, $template, $removeChunk, $dateSource, $dateFormat, $ph = array(), $modifier_mode = 'normal', $x = 0)
+    function render($resource, $template, $removeChunk, $dateSource, $dateFormat, $ph = [], $x = 0)
     {
         global $ditto_lang;
 
@@ -300,8 +301,8 @@ class ditto
             return $ditto_lang['resource_array_error'];
         }
 
-        $placeholders = array();
-        $contentVars = array();
+        $placeholders = [];
+        $contentVars = [];
         foreach ($resource as $name => $value) {
             $placeholders[$name] = $value;
             $contentVars['[*' . $name . '*]'] = $value;
@@ -338,26 +339,12 @@ class ditto
         unset($PHs);
 
         $output = $template;
-        if ($modifier_mode === 'normal') {
-            $i = 0;
-            while ($i < 10) {
-                $_ = $output;
-                $output = evo()->parseText($output, $placeholders);
-                if ($_ === $output) break;
-                $i++;
-            }
-        } elseif ($modifier_mode === 'phx') {
-            $phx = new prePHx($output);
-            $phx->setPlaceholders($placeholders);
-            $output = $phx->output();
-        } else {
-            $output = $this->template->replace(
-                $contentVars,
-                $this->template->replace(
-                    $placeholders,
-                    $output
-                )
-            );
+        $i = 0;
+        while ($i < 10) {
+            $_ = $output;
+            $output = evo()->parseText($output, $placeholders);
+            if ($_ === $output) break;
+            $i++;
         }
 
         if ($removeChunk) {
@@ -469,7 +456,6 @@ class ditto
             $this->addField($name, 'display', 'custom');
             $this->removeField($name, 'display', 'unknown');
             $source = $value[0];
-            $qe = $value[2];
 
             if (is_array($source)) {
                 if (strpos($source[0], ',') !== false) {
@@ -495,6 +481,7 @@ class ditto
                 }
             }
 
+            $qe = $value[2] ?? null;
             if ($qe === null) {
                 return;
             }
@@ -563,7 +550,7 @@ class ditto
 
     function multiSort($resource, $orderBy)
     {
-        $sort_arr = array();
+        $sort_arr = [];
         foreach ($resource as $uniqid => $row) {
             foreach ($row as $key => $value) {
                 $sort_arr[$key][$uniqid] = $value;
@@ -585,27 +572,27 @@ class ditto
     // ---------------------------------------------------
 
     function determineIDs(
-          $IDs
-        , $IDType
-        , $TVs
-        , $orderBy
-        , $depth
-        , $showPublishedOnly
-        , $seeThruUnpub
-        , $hideFolders
-        , $hidePrivate
-        , $showInMenuOnly
-        , $myWhere
-        , $keywords
-        , $dateSource
-        , $limit
-        , $summarize
-        , $filter
-        , $randomize
+        $IDs,
+        $IDType,
+        $TVs,
+        $orderBy,
+        $depth,
+        $showPublishedOnly,
+        $seeThruUnpub,
+        $hideFolders,
+        $hidePrivate,
+        $showInMenuOnly,
+        $myWhere,
+        $keywords,
+        $dateSource,
+        $limit,
+        $summarize,
+        $filter,
+        $randomize
     )
     {
         if (($summarize == 0 && $summarize !== 'all') || (is_array($IDs) && !$IDs) || $IDs === false) {
-            return array();
+            return [];
         }
         // Get starting IDs;
         switch ($IDType) {
@@ -623,7 +610,7 @@ class ditto
         if ($this->advSort == false && $hideFolders == 0 && $showInMenuOnly == 0 && $myWhere == '' && $filter == false && $hidePrivate == 1 && $keywords == 0) {
             $this->prefetch = false;
             $documents = $this->getDocumentsIDs($documentIDs, $showPublishedOnly);
-            $documentIDs = array();
+            $documentIDs = [];
             if ($documents) {
                 foreach ($documents as $doc) {
                     $documentIDs[] = $doc['id'];
@@ -635,7 +622,7 @@ class ditto
         $this->prefetch = true;
 
         // Create where clause
-        $where = array();
+        $where = [];
         if ($hideFolders) {
             $where[] = 'isfolder = 0';
         }
@@ -661,18 +648,18 @@ class ditto
             $this->addField('createdon', 'backend', 'db');
         }
         $resource = $this->getDocuments(
-            $documentIDs
-            , $this->fields['backend']['db']
-            , $TVs
-            , $orderBy
-            , $showPublishedOnly
-            , 0
-            , $hidePrivate
-            , $where
-            , $limit
-            , $keywords
-            , $randomize
-            , $dateSource
+            $documentIDs,
+            $this->fields['backend']['db'],
+            $TVs,
+            $orderBy,
+            $showPublishedOnly,
+            0,
+            $hidePrivate,
+            $where,
+            $limit,
+            $keywords,
+            $randomize,
+            $dateSource
         );
         if ($resource) {
             $resource = array_values($resource);
@@ -705,7 +692,7 @@ class ditto
                 $resource = $filterObj->execute($resource, $filter);
             }
             if (!$resource) {
-                return array();
+                return [];
             }
             if ($this->advSort && !$randomize) {
                 $resource = $this->multiSort($resource, $orderBy);
@@ -718,15 +705,15 @@ class ditto
             if ($orderBy['custom']) {
                 $resource = $this->userSort($resource, $orderBy);
             }
-            $fields = array_intersect($this->fields['backend'], $this->fields['display']);
-            $readyFields = array();
+            $fields = array_intersect_key($this->fields['backend'], $this->fields['display']);
+            $readyFields = [];
             foreach ($fields as $field) {
                 foreach ($field as $k => $v) {
                     $readyFields[$k] = $v;
                 }
             }
-            $processedIDs = array();
-            $keep = array();
+            $processedIDs = [];
+            $keep = [];
             foreach ($resource as $key => $value) {
                 $processedIDs[] = $value['id'];
                 $iKey = '#' . $value['id'];
@@ -758,7 +745,7 @@ class ditto
             return $processedIDs;
         }
 
-        return array();
+        return [];
     }
 
     private function unsort($docs, $ids)
@@ -767,7 +754,7 @@ class ditto
             $docs_tmp[$doc['id']] = $doc;
         }
         $ids = explode(',', $ids);
-        $rs = array();
+        $rs = [];
         foreach ($ids as $id) {
             $rs[] = $docs_tmp[$id];
         }
@@ -804,11 +791,11 @@ class ditto
     function getParentList()
     {
         $rs = db()->select('parent,id', '[+prefix+]site_content', 'deleted=0', 'parent, menuindex');
-        $kids = array();
+        $kids = [];
         while ($row = db()->getRow($rs)) {
             $kids[] = $row['parent'];
         }
-        $parents = array();
+        $parents = [];
         foreach ($kids as $parent) {
             if ($parent == 0) {
                 $parents[0] = '1';
@@ -825,7 +812,7 @@ class ditto
     // Apeend a TV to the documents array
     // ---------------------------------------------------
 
-    function appendTV($tvname = '', $docIDs)
+    function appendTV($tvname = '', $docIDs=[])
     {
         $rs = db()->select(
             'stv.*, stc.*'
@@ -841,7 +828,7 @@ class ditto
             , 'stc.contentid ASC'
         );
         $total = db()->count($rs);
-        $docs = array();
+        $docs = [];
         while ($row = db()->getRow($rs)) {
             $k = '#' . $row['contentid'];
             $v = evo()->tvProcessor($row);
@@ -929,7 +916,7 @@ class ditto
     function getChildIDs($IDs, $depth)
     {
         $depth = (int)$depth;
-        $docIDs = array();
+        $docIDs = [];
         foreach ($IDs as $id) {
             $kids = evo()->getChildIds($id, $depth);
             foreach ($kids as $k => $v) {
@@ -944,7 +931,7 @@ class ditto
     // Get documents and append TVs + Prefetch Data, and sort
     // ---------------------------------------------------
 
-    function getDocuments($ids = array(), $fields, $TVs, $orderBy, $published = 1, $deleted = 0, $publicOnly = 1, $extraWhere = '', $limit = '', $keywords = 0, $randomize = 0, $dateSource = false)
+    function getDocuments($ids = [], $fields=[], $TVs=[], $orderBy=[], $published = 1, $deleted = 0, $publicOnly = 1, $extraWhere = '', $limit = '', $keywords = 0, $randomize = 0, $dateSource = false)
     {
         if (!$ids) {
             return false;
@@ -955,13 +942,13 @@ class ditto
             $docgrp = evo()->getUserDocGroups();
             if (evo()->isFrontend()) {
                 $access = sprintf(
-                    'sc.privateweb=0 %s'
-                    , $docgrp ? ' OR dg.document_group IN (' . implode(',', $docgrp) . ')' : ''
+                    'sc.privateweb=0 %s',
+                    $docgrp ? ' OR dg.document_group IN (' . implode(',', $docgrp) . ')' : ''
                 );
             } elseif (sessionv('mgrRole') != 1) {
                 $access = sprintf(
-                    'sc.privatemgr=0 %s'
-                    , $docgrp ? ' OR dg.document_group IN (' . implode(',', $docgrp) . ')' : ''
+                    'sc.privatemgr=0 %s',
+                    $docgrp ? ' OR dg.document_group IN (' . implode(',', $docgrp) . ')' : ''
                 );
             }
         }
@@ -980,29 +967,29 @@ class ditto
             "SELECT DISTINCT %s FROM %s sc
                 LEFT JOIN %s dg on dg.document = sc.id
                 WHERE sc.id IN (%s) %s AND sc.deleted=%d %s
-                %s GROUP BY sc.id%s %s"
-            , 'sc.' . implode(',sc.', $fields)
-            , evo()->getFullTableName('site_content')
-            , evo()->getFullTableName('document_groups')
-            , join(',', $ids)
-            , $published ? 'AND sc.published=1' : ''
-            , $deleted
-            , $where
-            , $publicOnly ? sprintf('AND (%s)', $access) : ''
-            , $sort ? ' ORDER BY ' . $sort : ''
-            , ($limit != '') ? 'LIMIT ' . $limit : ''
+                %s GROUP BY sc.id%s %s",
+            'sc.' . implode(',sc.', $fields),
+            evo()->getFullTableName('site_content'),
+            evo()->getFullTableName('document_groups'),
+            implode(',', $ids),
+            $published ? 'AND sc.published=1' : '',
+            $deleted,
+            $where ?? '',
+            $publicOnly ? sprintf('AND (%s)', $access) : '',
+            $sort ? ' ORDER BY ' . $sort : '',
+            ($limit) ? 'LIMIT ' . $limit : ''
         );
 
         $rs = db()->query($sql);
         if (!db()->count($rs)) {
             return false;
         }
-        $docs = array();
+        $docs = [];
 
-        $TVIDs = array();
+        $TVIDs = [];
         while ($row = db()->getRow($rs)) {
             $docid = $row['id'];
-            if ($dateSource && $row[$dateSource]) {
+            if ($dateSource && !empty($row[$dateSource])) {
                 if (!preg_match('@^[1-9][0-9]*$@', $row[$dateSource])) {
                     $row[$dateSource] = strtotime($row[$dateSource]);
                 }
@@ -1019,7 +1006,7 @@ class ditto
             $TVIDs[] = $docid;
             $x = '#' . $docid;
             $docs[$x] = $row;
-            if ($this->prefetch['resource']) {
+            if (!empty($this->prefetch['resource'])) {
                 $docs[$x] = array_merge($row, $this->prefetch['resource'][$x]);
                 // merge the prefetch array and the normal array
             }
@@ -1033,7 +1020,7 @@ class ditto
         }
 
         $TVs = array_unique($TVs);
-        $TVData = array();
+        $TVData = [];
         if ($TVs) {
             foreach ($TVs as $tv) {
                 $TVData = $this->array_merge_recursive(
@@ -1068,13 +1055,13 @@ class ditto
     // Get an array of documents
     // ---------------------------------------------------
 
-    function getDocumentsIDs($ids = array(), $published = 1)
+    function getDocumentsIDs($ids = [], $published = 1)
     {
         if (!$ids) {
             return false;
         }
 
-        $where = array();
+        $where = [];
         $docGroup = evo()->getUserDocGroups();
         if ($docGroup) {
             $where[] = sprintf('sc.id IN (%s)', join(',', $ids));
@@ -1118,26 +1105,13 @@ class ditto
             );
         }
 
-        $docs = array();
+        $docs = [];
         while ($row = db()->getRow($rs)) {
             $docs[] = $row;
         }
         return $docs;
     }
 
-    // ---------------------------------------------------
-    // Function: formatDate
-    // Render the date in the proper format and encoding
-    // ---------------------------------------------------
-
-    function formatDate($dateUnixTime, $dateFormat)
-    {
-        $dt = evo()->toDateFormat($dateUnixTime, $dateFormat);
-        if (evo()->config('modx_charset') === 'UTF-8') {
-            $dt = utf8_encode($dt);
-        }
-        return $dt;
-    }
 
     // ---------------------------------------------------
     // Function: buildURL
@@ -1148,7 +1122,7 @@ class ditto
     {
         global $dittoID;
         $dittoID = ($dittoIdentifier !== false) ? $dittoIdentifier : $dittoID;
-        $query = array();
+        $query = [];
         foreach ($_GET as $param => $value) {
             if ($param !== 'id' && $param !== 'q') {
                 $clean_param = hsc($param, ENT_QUOTES);
@@ -1193,22 +1167,19 @@ class ditto
     // Get a parameter or use the default language value
     // ---------------------------------------------------
 
-    function getParam($param, $langString)
+    function getParam($param)
     {
         // get a parameter value and if it is not set get the default language string value
         global $ditto_lang;
 
         if (substr($param, 0, 1) === '@') {
-            $output = $this->template->fetch($param);
-        } else if (!empty($param)) {
-            $output = evo()->getChunk($param);
-        } else {
-            $output = $ditto_lang[$langString];
+            return $this->template->fetch($param);
         }
-        if (trim($output) === '') {
-            $output = $param;
+        if (evo()->hasChunk($param)) {
+            return evo()->getChunk($param);
         }
-        return $output;
+
+        return event()->param($param);
     }
 
     // ---------------------------------------------------
@@ -1322,7 +1293,7 @@ class ditto
             $max_x = $totalpages - 1;
             $min_x = $max_x - $max_paginate + 1;
         }
-        $pages = array();
+        $pages = [];
         for ($x = 0; $x <= $totalpages - 1; $x++) {
             $inc = $x * $summarize;
             $display = $x + 1;
@@ -1420,9 +1391,10 @@ class ditto
         global $modx;
         return method_exists($modx, 'mb_strftime')
             ? evo()->mb_strftime($format, $timestamp)
-            : strftime(
-                !empty($format) ? $format : evo()->toDateFormat(null, 'formatOnly') . ' %H:%M',
-                $timestamp
+            : (new DateTime())->setTimestamp($timestamp)->format(
+                !empty($format)
+                    ? $format
+                    : evo()->toDateFormat(null, 'formatOnly') . ' %H:%M'
             );
     }
 }

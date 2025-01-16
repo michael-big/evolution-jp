@@ -137,26 +137,7 @@ $debug = !empty($debug) ? $debug : 0;
     Related:
     - <debug>
 */
-if (isset($modifier_mode) || !isset($phx)) {
-    $modifier_mode = 'normal';
-} else {
-    $modifier_mode = !empty($phx) ? 'phx' : 'none';
-}
-/*
-    Param: modifier_mode
-
-    Purpose:
-    Use modifier mode
-
-    Options:
-    normal - core internal modifiers function
-    phx    - legacy phx function
-    none   - off
-
-    Default:
-    normal
-*/
-$extenders = isset($extenders) ? explode(',', $extenders) : array();
+$extenders = isset($extenders) ? explode(',', $extenders) : [];
 /*
     Param: extenders
 
@@ -175,7 +156,7 @@ $extenders = isset($extenders) ? explode(',', $extenders) : array();
 // Variable: extenders
 // Array that can be added to by configs or formats to load that extender
 
-$placeholders = array();
+$placeholders = [];
 // Variable: placeholders
 // Initialize custom placeholders array for configs or extenders to add to
 
@@ -188,7 +169,7 @@ if (isset($orderBy)) {
 if (substr(strtolower($orderBy), -2) !== 'sc') {
     $orderBy .= ' desc';
 }
-$orderBy = array('parsed' => array(), 'custom' => array(), 'unparsed' => $orderBy);
+$orderBy = array('parsed' => [], 'custom' => [], 'unparsed' => $orderBy);
 // Variable: orderBy
 // An array that holds all criteria to sort the result set by.
 // Note that using a custom sort will disable all other sorting.
@@ -206,9 +187,6 @@ $files = array(
     'format' => sprintf('%sformats/%s.format.inc.php', $ditto_base, $format)
 );
 
-if ($modifier_mode === 'phx') {
-    $files['prePHx_class'] = $ditto_base . 'classes/phx.pre.class.inc.php';
-}
 if (isset($randomize)) {
     $files['randomize_class'] = $ditto_base . 'classes/random.class.inc.php';
 }
@@ -631,7 +609,7 @@ if (!isset($seeThruUnpub)) {
     - <where>
 */
 if (!isset($queryLimit)) {
-    $queryLimit = 0;
+    $queryLimit = null;
 }
 /*
     Param: queryLimit
@@ -667,11 +645,8 @@ if (!isset($where)) {
     Related:
     - <queryLimit>
 */
-if (isset($noResults)) {
-    $noResults = $ditto->getParam($noResults, 'no_documents');
-} else {
-    $noResults = $_lang['no_documents'];
-}
+$noResults = event()->param('noResults', $_lang['no_documents']);
+
 /*
     Param: noResults
 
@@ -779,7 +754,7 @@ if (!isset($localFilterDelimiter)) {
     - <parseFilters>
 */
 if (!isset($filters)) {
-    $filters = array('custom' => array(), 'parsed' => array());
+    $filters = array('custom' => [], 'parsed' => []);
 }
 // Variable: filters
 // Holds both the custom filters array for configs or extenders to add to
@@ -795,7 +770,8 @@ if (isset($parsedFilters)) {
     $filters['parsed'] = array_merge($filters['parsed'], $parsedFilters);
 }
 // handle 2.0.0 compatibility
-if (isset($filter) || $filters['custom'] !== false || $filters['parsed'] !== false) {
+$filter = $filter ?? '';
+if ($filter || $filters['custom'] !== false || $filters['parsed'] !== false) {
     $filter = $ditto->parseFilters(
         $filter,
         $filters['custom'],
@@ -1134,7 +1110,7 @@ if ($count > 0) {
             - File via @FILE
 
             Placeholders:
-            url - URL for the next link
+            url - url for the next link
             lang:next - value of 'next' from the language file
 
             Related:
@@ -1319,7 +1295,6 @@ if ($count > 0) {
                 $dateSource,
                 $dateFormat,
                 $placeholders,
-                $modifier_mode,
                 abs($start - $x),
                 $stop
             );
@@ -1361,7 +1336,7 @@ if ($count > 0) {
 
 if ($debug == 1) {
     $ditto_params =& event()->params;
-    if (!isset($_GET["ditto_{$dittoID}debug"])) {
+    if (!getv("ditto_{$dittoID}debug")) {
         $_SESSION["ditto_debug_" . $dittoID] = $ditto->debug->render_popup(
             $ditto,
             $ditto_base,
@@ -1379,8 +1354,8 @@ if ($debug == 1) {
             $resource
         );
     }
-    if (isset($_GET["ditto_{$dittoID}debug"])) {
-        switch ($_GET["ditto_{$dittoID}debug"]) {
+    if (getv("ditto_{$dittoID}debug")) {
+        switch (getv("ditto_{$dittoID}debug")) {
             case "open":
                 exit($_SESSION["ditto_debug_{$dittoID}"]);
                 break;

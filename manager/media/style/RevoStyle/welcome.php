@@ -5,9 +5,9 @@ function iconMessage()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     if (evo()->hasPermission('messages')) {
-        $ph['imgsrc'] = ($_SESSION['nrnewmessages'] > 0) ? 'icons/32x/mail_new.png' : 'icons/32x/mail.png';
+        $ph['imgsrc'] = (sessionv('nrnewmessages', 0) > 0) ? 'icons/32x/mail_new.png' : 'icons/32x/mail.png';
         $ph['action'] = 'index.php?a=10';
         $ph['title'] = $_lang['inbox'];
         $modx->setPlaceholder('iconMessage', $modx->parseText(icontpl(), $ph));
@@ -18,7 +18,7 @@ function iconElements()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     if (evo()->hasPermission('new_template') || evo()->hasPermission('edit_template') || evo()->hasPermission('new_snippet') || evo()->hasPermission('edit_snippet') || evo()->hasPermission('new_plugin') || evo()->hasPermission('edit_plugin')) {
         $ph['imgsrc'] = 'icons/32x/elements.png';
         $ph['action'] = 'index.php?a=76';
@@ -31,7 +31,7 @@ function iconNewDoc()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     if (evo()->hasPermission('new_document') || evo()->hasPermission('save_document')) {
         $ph['imgsrc'] = 'icons/32x/newdoc.png';
         $ph['action'] = 'index.php?a=4';
@@ -44,7 +44,7 @@ function iconSettings()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     if (evo()->hasPermission('settings')) {
         $ph['imgsrc'] = 'icons/32x/settings.png';
         $ph['action'] = 'index.php?a=17';
@@ -57,7 +57,7 @@ function iconResources()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     if (evo()->hasPermission('view_document')) {
         $ph['imgsrc'] = 'icons/32x/resources.png';
         $ph['action'] = 'index.php?a=120';
@@ -70,7 +70,7 @@ function iconHelp()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     if (evo()->hasPermission('help')) {
         $ph['imgsrc'] = 'icons/32x/help.png';
         $ph['action'] = 'index.php?a=9';
@@ -83,7 +83,7 @@ function iconFileManager()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     if (evo()->hasPermission('file_manager')) {
         $ph['imgsrc'] = 'icons/32x/files.png';
         $ph['action'] = 'index.php?a=31';
@@ -96,7 +96,7 @@ function iconEventLog()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     if (evo()->hasPermission('view_eventlog')) {
         $ph['imgsrc'] = 'icons/32x/log.png';
         $ph['action'] = 'index.php?a=114';
@@ -109,7 +109,7 @@ function iconSysInfo()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     if (evo()->hasPermission('logs')) {
         $ph['imgsrc'] = 'icons/32x/info.png';
         $ph['action'] = 'index.php?a=53';
@@ -122,7 +122,7 @@ function iconSearch()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     $ph['imgsrc'] = 'icons/32x/search.png';
     $ph['action'] = 'index.php?a=71';
     $ph['title'] = $_lang['search_resource'];
@@ -131,22 +131,22 @@ function iconSearch()
 
 function tabYourInfo()
 {
-    global $modx, $_lang, $server_offset_time;
+    global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
 
     $ph = $_lang;
 
-    if (!empty($_SESSION['mgrLastlogin'])) {
-        $Lastlogin = $modx->toDateFormat($_SESSION['mgrLastlogin'] + $server_offset_time);
+    if (sessionv('mgrLastlogin')) {
+        $Lastlogin = $modx->toDateFormat(sessionv('mgrLastlogin', 0) + config('server_offset_time'));
     } else {
         $Lastlogin = '-';
     }
 
     $ph['UserName'] = $modx->getLoginUserName();
-    $ph['name'] = $_SESSION['mgrPermissions']['name'];
+    $ph['name'] = sessionv('mgrPermissions.name');
     $ph['Lastlogin'] = $Lastlogin;
-    $ph['Logincount'] = $_SESSION['mgrLogincount'] + 1;
+    $ph['Logincount'] = sessionv('mgrLogincount', 0) + 1;
 
 
     $tpl = <<< TPL
@@ -221,7 +221,7 @@ function tabOnlineUser()
 {
     global $modx, $_lang;
 
-    if (!isset($_GET['a']) || $_GET['a'] !== '2') return;
+    if (getv('a') != 2) return;
     $ph = $_lang;
     $timetocheck = (time() - (60 * 20));//+$server_offset_time;
 
@@ -231,14 +231,22 @@ function tabOnlineUser()
     if ($total == 1) {
         $ph['OnlineInfo'] = $modx->parseText('<p>[+no_active_users_found+]</p>', $ph);
     } else {
-        $tr = array();
+        $tr = [];
         while ($row = db()->getRow($rs)) {
             $currentaction = getAction($row['action'], $row['id']);
             $webicon = ($row['internalKey'] < 0) ? '<img src="media/style/' . $modx->config['manager_theme'] . '/images/tree/globe.png" alt="Web user" />' : '';
-            $tr[] = "<tr><td><b>" . $row['username'] . "</b></td><td>{$webicon}&nbsp;" . abs($row['internalKey']) . "</td><td>" . $row['ip'] . "</td><td>" . strftime('%H:%M:%S', $row['lasthit'] + $server_offset_time) . "</td><td>{$currentaction}</td></tr>";
+            $tr[] = sprintf(
+                "<tr><td><b>%s</b></td><td>%s&nbsp;%d</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+                $row['username'],
+                $webicon,
+                abs($row['internalKey']),
+                $row['ip'],
+                evo()->mb_strftime('%H:%M:%S', $row['lasthit'] + config('server_offset_time')),
+                $currentaction
+            );
         }
         if (!empty($tr)) $ph['userlist'] = join("\n", $tr);
-        $ph['now'] = strftime('%H:%M:%S', time() + $server_offset_time);
+        $ph['now'] = evo()->mb_strftime('%H:%M:%S', time() + config('server_offset_time'));
         $tpl = <<< TPL
 <p>[+onlineusers_message+]<b>[+now+]</b>)</p>
 <table width="100%" class="grid">

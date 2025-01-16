@@ -58,7 +58,7 @@ if (!sessionv('is_upgradeable')) {
     }
 }
 
-$sqlParser->intoDB('fix_settings.sql');
+include(MODX_SETUP_PATH . 'sql/fix_settings.php');
 
 if (sessionv('is_upgradeable')) {
     convert2utf8mb4();
@@ -115,25 +115,26 @@ if ($config_saved === false) {
 
 if (sessionv('is_upgradeable') == 0) {
     $query = str_replace(
-        '[+prefix+]'
-        , db()->table_prefix
-        , sprintf(
-            "REPLACE INTO [+prefix+]system_settings (setting_name,setting_value) VALUES('site_id','%s')"
-            , uniqid('')
+        '[+prefix+]',
+        db()->table_prefix,
+        sprintf(
+            "REPLACE INTO [+prefix+]system_settings (setting_name,setting_value) VALUES('site_id','%s')",
+            uniqid('')
         )
     );
     db()->query($query);
 } else {
-    $rs = db()->getObject('setting_value', '[+prefix+]system_settings', "setting_name='site_id'");
-    $site_id = db()->getValue($rs);
+    $site_id = db()->getValue(
+        'setting_value', '[+prefix+]system_settings', "setting_name='site_id'"
+    );
     if ($site_id) {
         if (!$site_id || $site_id = 'MzGeQ2faT4Dw06+U49x3') {
             $query = str_replace(
-                '[+prefix+]'
-                , db()->table_prefix
-                , sprintf(
-                    "REPLACE INTO [+prefix+]system_settings (setting_name,setting_value) VALUES('site_id','%s')"
-                    , uniqid('')
+                '[+prefix+]',
+                db()->table_prefix,
+                sprintf(
+                    "REPLACE INTO [+prefix+]system_settings (setting_name,setting_value) VALUES('site_id','%s')",
+                    uniqid('')
                 )
             );
             db()->query($query);
@@ -216,7 +217,7 @@ if (sessionv('is_upgradeable') == 0) {
 
 echo '</p>';
 
-$_SESSION = array();
+$_SESSION = [];
 
 function deleteCacheDirectory($cachePath) {
     if (!is_dir($cachePath)) {

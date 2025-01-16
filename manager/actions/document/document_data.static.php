@@ -29,7 +29,7 @@ evo()->updatePublishStatus();
 $where = array(
     sprintf("sc.id ='%s'", $id)
 );
-if (sessionv('mgrDocgroups') && sessionv('mgrRole') != 1) {
+if (sessionv('mgrDocgroups') && !manager()->isAdmin()) {
     $where[] = sprintf(
         "AND (sc.privatemgr=0 OR dg.document_group IN (%s))",
         implode(',', sessionv('mgrDocgroups'))
@@ -80,9 +80,15 @@ if ($row = db()->getRow($rs)) {
 }
 
 // Get Template name
-$rs = db()->select('templatename', '[+prefix+]site_templates', "id='{$content['template']}'");
+$rs = db()->select(
+    'templatename',
+    '[+prefix+]site_templates',
+    sprintf("id='%s'", entity('template'))
+);
 if ($row = db()->getRow($rs)) {
     $templatename = $row['templatename'];
+} else {
+    $templatename = 'blank';
 }
 
 // Set the item name for logging
@@ -92,22 +98,28 @@ foreach ($content as $k => $v) {
     $content[$k] = hsc($v);
 }
 
+function entity($key, $default = null)
+{
+    global $content;
+    return $content[$key] ?? $default;
+}
+
 ?>
 <script type="text/javascript">
     function duplicatedocument() {
-        if (confirm("<?= $_lang['confirm_resource_duplicate']; ?>")) {
+        if (confirm("<?= $_lang['confirm_resource_duplicate'] ?>")) {
             document.location.href = "index.php?id=<?= $id ?>&a=94";
         }
     }
 
     function deletedocument() {
-        if (confirm("<?= $_lang['confirm_delete_resource']; ?>")) {
+        if (confirm("<?= $_lang['confirm_delete_resource'] ?>")) {
             document.location.href = "index.php?id=<?= $id ?>&a=6";
         }
     }
 
     function editdocument() {
-        document.location.href = "index.php?id=<?= $id; ?>&a=27";
+        document.location.href = "index.php?id=<?= $id ?>&a=27";
     }
 
     function movedocument() {
@@ -169,11 +181,13 @@ foreach ($content as $k => $v) {
                 documentDirty=false;
                 <?php
                 if (isset($content['parent']) && $content['parent'] != 0) {
-                    echo "document.location.href='index.php?a=120&id=" . $content['parent'] . "';";
-                } elseif ($_GET['pid']) {
-                    echo "document.location.href='index.php?a=120&id=" . (int)$_GET['pid'] . "';";
+                    $tpl = 'document.location.href=\'index.php?a=120&id=%s\';';
+                    echo sprintf($tpl, entity('parent'));
+                } elseif (getv('pid')) {
+                    $tpl = 'document.location.href=\'index.php?a=120&id=%d\';';
+                    echo sprintf($tpl, (int)getv('pid'));
                 } else {
-                    echo "document.location.href='index.php?a=2';";
+                    echo 'document.location.href=\'index.php?a=2\';';
                 }
                 ?>"
             ><img
@@ -201,7 +215,7 @@ foreach ($content as $k => $v) {
                 <table>
                     <tr>
                         <td width="200">ID:</td>
-                        <td><?= $content['id'] ?></td>
+                        <td><?= entity('id') ?></td>
                         <td>[*id*]</td>
                     </tr>
                     <tr>
@@ -210,7 +224,7 @@ foreach ($content as $k => $v) {
                             echo sprintf(
                                 '%s(id:%s)',
                                 $templatename,
-                                $content['template']
+                                entity('template')
                             );
                             ?>
                         </td>
@@ -218,14 +232,14 @@ foreach ($content as $k => $v) {
                     </tr>
                     <tr>
                         <td><?= $_lang['resource_title'] ?>:</td>
-                        <td><?= $content['pagetitle'] ?></td>
+                        <td><?= entity('pagetitle') ?></td>
                         <td>[*pagetitle*]</td>
                     </tr>
                     <tr>
                         <td><?= $_lang['long_title'] ?>:</td>
                         <td><?php
-                            if ($content['longtitle'] != '') {
-                                echo $content['longtitle'];
+                            if (entity('longtitle') != '') {
+                                echo entity('longtitle');
                             } else {
                                 echo "(<i>" . $_lang['not_set'] . "</i>)";
                             } ?>
@@ -235,8 +249,8 @@ foreach ($content as $k => $v) {
                     <tr>
                         <td><?= $_lang['resource_description'] ?>:</td>
                         <td><?=
-                            $content['description'] != ''
-                                ? $content['description']
+                            entity('description') != ''
+                                ? entity('description')
                                 : "(<i>" . $_lang['not_set'] . "</i>)"
                             ?></td>
                         <td>[*description*]</td>
@@ -244,8 +258,8 @@ foreach ($content as $k => $v) {
                     <tr>
                         <td><?= $_lang['resource_summary'] ?>:</td>
                         <td><?=
-                            $content['introtext'] != ''
-                                ? $content['introtext']
+                            entity('introtext') != ''
+                                ? entity('introtext')
                                 : "(<i>" . $_lang['not_set'] . "</i>)"
                             ?></td>
                         <td>[*introtext*]</td>
@@ -253,7 +267,7 @@ foreach ($content as $k => $v) {
                     <tr>
                         <td><?= $_lang['type'] ?>:</td>
                         <td><?=
-                            $content['type'] === 'reference'
+                            entity('type') === 'reference'
                                 ? $_lang['weblink']
                                 : $_lang['resource']
                             ?></td>
@@ -262,8 +276,8 @@ foreach ($content as $k => $v) {
                     <tr>
                         <td><?= $_lang['resource_alias'] ?>:</td>
                         <td><?=
-                            $content['alias'] != ''
-                                ? $content['alias']
+                            entity('alias') != ''
+                                ? entity('alias')
                                 : "(<i>" . $_lang['not_set'] . "</i>)"
                             ?></td>
                         <td>[*alias*]</td>
@@ -272,7 +286,7 @@ foreach ($content as $k => $v) {
                         <td width="200"><?= $_lang['page_data_created'] ?>:</td>
                         <td><?=
                             evo()->toDateFormat(
-                                $content['createdon'] + evo()->config('server_offset_time', 0)
+                                entity('createdon') + evo()->config('server_offset_time', 0)
                             )
                             ?>
                             (<b><?= $createdbyname ?></b>)
@@ -282,7 +296,7 @@ foreach ($content as $k => $v) {
                     <?php if ($editedbyname != '') { ?>
                         <tr>
                             <td><?= $_lang['page_data_edited'] ?>:</td>
-                            <td><?= evo()->toDateFormat($content['editedon'] + evo()->config('server_offset_time', 0)) ?>
+                            <td><?= evo()->toDateFormat(entity('editedon') + evo()->config('server_offset_time', 0)) ?>
                                 (<b><?= $editedbyname ?></b>)
                             </td>
                             <td>[*editedon:date*]</td>
@@ -291,7 +305,7 @@ foreach ($content as $k => $v) {
                     <tr>
                         <td width="200"><?= $_lang['page_data_status'] ?>:</td>
                         <td><?=
-                            $content['published'] == 0
+                            entity('published') == 0
                                 ? '<span class="unpublishedDoc">' . $_lang['page_data_unpublished'] . '</span>'
                                 : '<span class="publisheddoc">' . $_lang['page_data_published'] . '</span>'
                             ?></td>
@@ -300,45 +314,45 @@ foreach ($content as $k => $v) {
                     <tr>
                         <td><?= $_lang['page_data_publishdate'] ?>:</td>
                         <td><?=
-                            $content['pub_date'] == 0
+                            entity('pub_date') == 0
                                 ? "(<i>" . $_lang['not_set'] . "</i>)"
-                                : evo()->toDateFormat($content['pub_date'])
+                                : evo()->toDateFormat(entity('pub_date'))
                             ?></td>
                         <td>[*pub_date:date*]</td>
                     </tr>
                     <tr>
                         <td><?= $_lang['page_data_unpublishdate'] ?>:</td>
                         <td><?=
-                            $content['unpub_date'] == 0
+                            entity('unpub_date') == 0
                                 ? "(<i>" . $_lang['not_set'] . "</i>)"
-                                : evo()->toDateFormat($content['unpub_date'])
+                                : evo()->toDateFormat(entity('unpub_date'))
                             ?></td>
                         <td>[*unpub_date:date*]</td>
                     </tr>
                     <tr>
                         <td><?= $_lang['page_data_cacheable'] ?>:</td>
-                        <td><?= $content['cacheable'] == 0 ? $_lang['no'] : $_lang['yes'] ?></td>
+                        <td><?= entity('cacheable') == 0 ? $_lang['no'] : $_lang['yes'] ?></td>
                         <td>[*cacheable*]</td>
                     </tr>
                     <tr>
                         <td><?= $_lang['page_data_searchable'] ?>:</td>
-                        <td><?= $content['searchable'] == 0 ? $_lang['no'] : $_lang['yes'] ?></td>
+                        <td><?= entity('searchable') == 0 ? $_lang['no'] : $_lang['yes'] ?></td>
                         <td>[*searchable*]</td>
                     </tr>
                     <tr>
                         <td><?= $_lang['resource_opt_menu_index'] ?>:</td>
-                        <td><?= $content['menuindex'] ?></td>
+                        <td><?= entity('menuindex') ?></td>
                         <td>[*menuindex*]</td>
                     </tr>
                     <tr>
                         <td><?= $_lang['resource_opt_show_menu'] ?>:</td>
-                        <td><?= $content['hidemenu'] == 1 ? $_lang['no'] : $_lang['yes'] ?></td>
+                        <td><?= entity('hidemenu') == 1 ? $_lang['no'] : $_lang['yes'] ?></td>
                         <td>[*hidemenu*]</td>
                     </tr>
                     <tr>
                         <td><?= $_lang['page_data_web_access'] ?>:</td>
                         <td><?php
-                            if ($content['privateweb'] == 0) {
+                            if (entity('privateweb') == 0) {
                                 echo $_lang['public'];
                             } else {
                                 echo sprintf(
@@ -353,7 +367,7 @@ foreach ($content as $k => $v) {
                     <tr>
                         <td><?= $_lang['page_data_mgr_access'] ?>:</td>
                         <td><?php
-                            if ($content['privatemgr'] == 0) {
+                            if (entity('privatemgr') == 0) {
                                 echo $_lang['public'];
                             } else {
                                 echo sprintf(
@@ -366,20 +380,21 @@ foreach ($content as $k => $v) {
                     </tr>
                     <tr>
                         <td><?= $_lang['page_data_editor'] ?>:</td>
-                        <td><?= $content['richtext'] == 0 ? $_lang['no'] : $_lang['yes'] ?></td>
+                        <td><?= entity('richtext') == 0 ? $_lang['no'] : $_lang['yes'] ?></td>
                         <td>[*richtext*]</td>
                     </tr>
                     <tr>
                         <td><?= $_lang['page_data_folder'] ?>:</td>
-                        <td><?= $content['isfolder'] == 0 ? $_lang['no'] : $_lang['yes'] ?></td>
+                        <td><?= entity('isfolder') == 0 ? $_lang['no'] : $_lang['yes'] ?></td>
                         <td>[*isfolder*]</td>
                     </tr>
                 </table>
             </div><!-- end sectionBody -->
         </div><!-- end tab-page -->
         <?php
-        $cache = @file_get_contents(MODX_CACHE_PATH . "docid_{$id}.pageCache.php");
-        if ($cache) :
+        $cachePath = MODX_CACHE_PATH . "docid_{$id}.pageCache.php";
+        if (is_file($cachePath)) :
+            $cache = file_get_contents(MODX_CACHE_PATH . "docid_{$id}.pageCache.php");
             ?>
             <!-- Page Source -->
             <div class="tab-page" id="tabSource">

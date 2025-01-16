@@ -89,6 +89,7 @@ class DocumentParser
     public $user_allowed_docs;
     public $mail;
     public $table;
+    public $sub;
 
     private $baseTime = ''; //タイムマシン(基本は現在時間)
 
@@ -131,7 +132,7 @@ class DocumentParser
             $this->config = $this->getSettings();
         }
 
-        if (!isset($this->config['error_reporting']) || 1 < $this->config['error_reporting']) {
+        if (!$this->config('error_reporting') || 1 < $this->config('error_reporting')) {
             if ($error_type == 1) {
                 $title = 'Call deprecated method';
                 $msg = $this->htmlspecialchars("\$modx->{$method_name}() is deprecated function");
@@ -329,7 +330,9 @@ class DocumentParser
         $trackingParameters = [
             'gclid', 'yclid', 'fbclid', 'msclkid',
             'utm_source', 'utm_medium', 'utm_campaign',
-            'utm_term', 'utm_content'
+            'utm_term', 'utm_content','ldtag_cl','twclid',
+            'utm_feeditemid','utm_device','hsa_cam','hsa_grp',
+            'hsa_mt','hsa_src','hsa_ad','hsa_acc','hsa_net','hsa_kw','hsa_tgt','hsa_ver',
         ];
 
         // 特定のトラッキングパラメータを削除
@@ -347,11 +350,12 @@ class DocumentParser
             return getv('id');
         }
 
-        if ($uri === MODX_BASE_URL) {
+        $parsedUri = parse_url($uri, PHP_URL_PATH);
+        if ($parsedUri === MODX_BASE_URL) {
             return $this->config('site_start');
         }
 
-        $urlWithoutQuery = $this->getRequestQ($uri);
+        $urlWithoutQuery = $this->getRequestQ($parsedUri);
         $docId = $this->getDBCache('docid_by_uri', $urlWithoutQuery);
         if ($docId) {
             return $docId;
@@ -359,16 +363,21 @@ class DocumentParser
 
         $docId = $this->getIdFromAlias($this->_treatAliasPath($urlWithoutQuery));
 
-        if ($docId) {
-            $this->setDBCache('docid_by_uri', $uri, $docId);
-            return $docId;
+        if (!$docId) {
+            return 0;
         }
 
-        return 0;
+        $this->saveDBCache('docid_by_uri', $parsedUri, $docId);
+
+        return $docId;
     }
 
-    function setDBCache($category, $key, $value)
+    private function saveDBCache($category, $key, $value)
     {
+        if (245 < strlen($key)) {
+            return false;
+        }
+
         db()->delete(
             '[+prefix+]system_cache',
             [
@@ -376,10 +385,11 @@ class DocumentParser
                 and_where('cache_key', $key)
             ]
         );
+
         return db()->insert(
             db()->escape(
                 [
-                    'cache_section'  => $category,
+                    'cache_section'   => $category,
                     'cache_key'       => $key,
                     'cache_value'     => $value,
                     'cache_timestamp' => request_time()
@@ -423,8 +433,8 @@ class DocumentParser
             $alias = $q;
         }
 
-        $prefix = $this->config['friendly_url_prefix'];
-        $suffix = $this->config['friendly_url_suffix'];
+        $prefix = $this->config('friendly_url_prefix');
+        $suffix = $this->config('friendly_url_suffix');
         if ($prefix && strpos($q, $prefix) !== false) {
             $alias = preg_replace("@^{$prefix}@", '', $alias);
         }
@@ -539,7 +549,7 @@ class DocumentParser
 
             // validation routines
             if ($this->checkSiteStatus() === false) {
-                if (!$this->config['site_unavailable_page']) {
+                if (!$this->config('site_unavailable_page')) {
                     header("Content-Type: text/html; charset={$this->config['modx_charset']}");
                     $tpl = '<!DOCTYPE html><head><title>[+site_unavailable_message+]</title><body>[+site_unavailable_message+]';
                     $content = $this->parseText($tpl, $this->config);
@@ -723,7 +733,7 @@ class DocumentParser
         $this->documentOutput = $content;
 
         // invoke OnLogPageView event
-        if ($this->config['track_visitors'] == 1) {
+        if ($this->config('track_visitors') == 1) {
             $this->invokeEvent('OnLogPageHit');
         }
 
@@ -788,7 +798,7 @@ class DocumentParser
         if (strpos($contents, '[!') === false) {
             return $contents;
         }
-        if ($this->config['cache_type'] == 2) {
+        if ($this->config('cache_type') == 2) {
             $this->config['cache_type'] = 1;
         }
 
@@ -839,7 +849,7 @@ class DocumentParser
                 $this->documentObject['__MODxDocGroups__'] = join(',', $docGroups);
             }
 
-            switch ($this->config['cache_type']) {
+            switch ($this->config('cache_type')) {
                 case '1':
                     $cacheContent = '<?php header("HTTP/1.0 404 Not Found");exit; ?>';
                     $cacheContent .= serialize($this->documentObject);
@@ -923,7 +933,7 @@ class DocumentParser
         return device();
     }
 
-    public function join($delim = ',', $array, $prefix = '')
+    public function join($delim = ',', $array = [], $prefix = '')
     {
         foreach ($array as $i => $v) {
             $array[$i] = $prefix . trim($v);
@@ -1093,11 +1103,13 @@ class DocumentParser
             setcookie(
                 'modx_remember_manager',
                 $user['username'],
-                strtotime('+1 month'),
-                MODX_BASE_URL,
-                null,
-                init::is_ssl() ? true : false,
-                true
+                [
+                    'expires' => strtotime('+1 month'),
+                    'path' => MODX_BASE_URL,
+                    'secure' => init::is_ssl(),
+                    'httponly' => true,
+                    'samesite' => 'Lax'
+                ]
             );
         } else {
             $_SESSION['modx.mgr.session.cookie.lifetime'] = 0;
@@ -1141,11 +1153,11 @@ class DocumentParser
         if (defined('MODX_SITE_URL')) {
             $this->config['site_url'] = MODX_SITE_URL;
         }
-        if (!isset($this->config['error_page'])) {
-            $this->config['error_page'] = $this->config['start_page'];
+        if (!$this->config('error_page')) {
+            $this->config['error_page'] = $this->config('start_page');
         }
-        if (!isset($this->config['unauthorized_page'])) {
-            $this->config['unauthorized_page'] = $this->config['error_page'];
+        if (!$this->config('unauthorized_page')) {
+            $this->config['unauthorized_page'] = $this->config('error_page');
         }
 
         $this->config = $this->getWebUserSettings($this->config);
@@ -1154,18 +1166,18 @@ class DocumentParser
             $this->config[$k] = $v;
         }
 
-        if (strpos($this->config['filemanager_path'], '[(') !== false) {
+        if (strpos($this->config('filemanager_path'), '[(') !== false) {
             $this->config['filemanager_path'] = str_replace(
                 '[(base_path)]',
                 MODX_BASE_PATH,
-                $this->config['filemanager_path']
+                $this->config('filemanager_path')
             );
         }
-        if (strpos($this->config['rb_base_dir'], '[(') !== false) {
+        if (strpos($this->config('rb_base_dir'), '[(') !== false) {
             $this->config['rb_base_dir'] = str_replace(
                 '[(base_path)]',
                 MODX_BASE_PATH,
-                $this->config['rb_base_dir']
+                $this->config('rb_base_dir')
             );
         }
         if (!isset($this->config['modx_charset'])) {
@@ -1175,12 +1187,12 @@ class DocumentParser
         if ($this->lastInstallTime) {
             $this->config['lastInstallTime'] = $this->lastInstallTime;
         }
-        if ($this->config['legacy_cache']) {
+        if ($this->config('legacy_cache')) {
             $this->setAliasListing();
         }
         $this->setSnippetCache();
 
-        if ($this->config['disable_cache_at_login'] && $this->isFrontEnd() && $this->isLoggedIn('mgr')) {
+        if ($this->config('disable_cache_at_login') && $this->isFrontEnd() && $this->isLoggedIn('mgr')) {
             $this->config['cache_type'] = 0;
         }
 
@@ -2513,7 +2525,7 @@ class DocumentParser
 
         $content = str_replace(['<@ELSE>', '<@ENDIF>'], ['<?php else:?>', '<?php endif;?>'], $content);
         if (strpos($content, '<?xml') !== false) {
-            $content = str_replace('<?xml', '<?php echo "<?xml";?>', $content);
+            $content = str_replace('<?xml', '<?= "<?xml";?>', $content);
         }
         ob_start();
         eval('?>' . $content);
@@ -4260,9 +4272,9 @@ class DocumentParser
         }
 
         $timestamp = trim($timestamp);
-        $timestamp = (int)$timestamp + $this->config['server_offset_time'];
+        $timestamp = (int)$timestamp + $this->config('server_offset_time');
 
-        switch ($this->config['datetime_format']) {
+        switch ($this->config('datetime_format', 'YYYY/mm/dd')) {
             case 'YYYY/mm/dd':
                 $dateFormat = '%Y/%m/%d';
                 break;
@@ -4294,7 +4306,7 @@ class DocumentParser
             return $str;
         }
 
-        switch ($this->config['datetime_format']) {
+        switch ($this->config('datetime_format')) {
             case 'YYYY/mm/dd':
                 if (!preg_match('/^[0-9]{4}\/[0-9]{2}\/[0-9]{2}[0-9 :]*$/', $str)) {
                     return '';
@@ -4338,39 +4350,62 @@ class DocumentParser
             $a = explode(',', 'Sun, Mon, Tue, Wed, Thu, Fri, Sat');
         }
         if (isset($_lc['days.wide'])) {
-            $A = explode(',', $_lc['days.short']);
+            $A = explode(',', $_lc['days.wide']);
         } else {
             $A = explode(',', 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday');
         }
-        $w = strftime('%w', $timestamp);
-        $p = ['am' => 'AM', 'pm' => 'PM'];
-        $P = ['am' => 'am', 'pm' => 'pm'];
-        $ampm = (strftime('%H', $timestamp) < 12) ? 'am' : 'pm';
+
         if ($timestamp === '') {
             return '';
         }
+
+        $date = new DateTime();
+        $date->setTimestamp($timestamp);
+
+        $w = $date->format('w');
+        $ampm = ($date->format('H') < 12) ? 'am' : 'pm';
+        $p = ['am' => 'AM', 'pm' => 'PM'];
+        $P = ['am' => 'am', 'pm' => 'pm'];
+
         if (strpos(PHP_OS, 'WIN') === 0) {
             $format = str_replace('%-', '%#', $format);
         }
-        $pieces = preg_split('@(%[\-#]?[a-zA-Z%])@', $format, -1, PREG_SPLIT_DELIM_CAPTURE);
 
-        $str = '';
-        foreach ($pieces as $v) {
-            if ($v === '%a') {
-                $str .= $a[$w];
-            } elseif ($v === '%A') {
-                $str .= $A[$w];
-            } elseif ($v === '%p') {
-                $str .= $p[$ampm];
-            } elseif ($v === '%P') {
-                $str .= $P[$ampm];
-            } elseif (strpos($v, '%') !== false) {
-                $str .= strftime($v, $timestamp);
-            } else {
-                $str .= $v;
-            }
-        }
-        return $str;
+        $replacements = [
+            '%a' => $a[$w],
+            '%A' => $A[$w],
+            '%p' => $p[$ampm],
+            '%P' => $P[$ampm],
+            '%Y' => $date->format('Y'),
+            '%y' => $date->format('y'),
+            '%m' => $date->format('m'),
+            '%B' => $date->format('F'),
+            '%b' => $date->format('M'),
+            '%d' => $date->format('d'),
+            '%e' => $date->format('j'),
+            '%H' => $date->format('H'),
+            '%I' => $date->format('h'),
+            '%M' => $date->format('i'),
+            '%S' => $date->format('s'),
+            '%w' => $date->format('w'),
+            '%j' => $date->format('z'),
+            '%U' => $date->format('W'),
+            '%W' => $date->format('W'),
+            '%C' => floor($date->format('Y') / 100),
+            '%u' => $date->format('N'),
+            '%V' => $date->format('W'),
+            '%z' => $date->format('O'),
+            '%Z' => $date->format('T'),
+            '%G' => $date->format('o'),
+            '%g' => $date->format('y'),
+            '%c' => $date->format('c'),
+            '%x' => $date->format('Y-m-d'),
+            '%X' => $date->format('H:i:s'),
+            '%%' => '%',
+            // 必要に応じて他のフォーマットも追加
+        ];
+
+        return strtr($format, $replacements);
     }
 
     #::::::::::::::::::::::::::::::::::::::::
@@ -4597,15 +4632,15 @@ class DocumentParser
     # Returns current user id
     function getLoginUserID($context = '')
     {
-        if ($context && isset($_SESSION["{$context}Validated"])) {
-            return $_SESSION["{$context}InternalKey"];
+        if ($context && sessionv("{$context}Validated")) {
+            return sessionv("{$context}InternalKey");
         }
 
-        if ($this->isFrontend() && isset($_SESSION['webValidated'])) {
-            return $_SESSION['webInternalKey'];
+        if ($this->isFrontend() && sessionv('webValidated')) {
+            return sessionv('webInternalKey');
         }
 
-        if ($this->isBackend() && isset($_SESSION['mgrValidated'])) {
+        if ($this->isBackend() && sessionv('mgrValidated')) {
             return sessionv('mgrInternalKey', 0);
         }
 
@@ -5199,10 +5234,10 @@ class DocumentParser
         $cache[$aliasPath] = false;
 
         if (empty($aliasPath)) {
-            return $this->config['site_start'];
+            return $this->config('site_start');
         }
 
-        if ($this->config['use_alias_path']) {
+        if ($this->config('use_alias_path')) {
             if (strpos($aliasPath, '/') !== false) {
                 $_a = explode('/', $aliasPath);
             } else {
@@ -5466,9 +5501,9 @@ class DocumentParser
     function move_uploaded_file($tmp_path, $target_path)
     {
         $target_path = str_replace('\\', '/', $target_path);
-        $new_file_permissions = octdec(ltrim($this->config['new_file_permissions'], '0'));
+        $new_file_permissions = octdec(ltrim($this->config('new_file_permissions'), '0'));
 
-        if (strpos($target_path, $this->config['filemanager_path']) !== 0) {
+        if (strpos($target_path, $this->config('filemanager_path')) !== 0) {
             $msg = "Can't upload to '{$target_path}'.";
             $this->logEvent(1, 3, $msg, 'move_uploaded_file');
         }
@@ -5501,7 +5536,7 @@ class DocumentParser
         $limit_width = $this->config('image_limit_width');
         if (!$limit_width || $img[0] <= $limit_width || !$ext) {
             if (move_uploaded_file($tmp_path, $target_path)) {
-                @chmod($target_path, octdec($this->config['new_file_permissions']));
+                @chmod($target_path, octdec($this->config('new_file_permissions')));
                 return true;
             }
             $this->logEvent(
@@ -5676,7 +5711,7 @@ class DocumentParser
     public function config($key = null, $default = null)
     {
         if (!defined('MODX_SETUP_PATH')) {
-            if (!isset($this->config['site_url']) || !$this->config['site_url']) {
+            if (empty($this->config['site_url'])) {
                 $this->getSettings();
             }
         }

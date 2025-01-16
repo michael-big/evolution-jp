@@ -140,9 +140,7 @@ class DocManagerBackend
 
         if ($pids !== '' && $template !== '') {
             $values = rtrim($pids, ' OR ');
-            $fields = array(
-                'template' => (int)$template
-            );
+            $fields = ['template' => (int)$template];
             db()->update($fields, evo()->getFullTableName('site_content'), $values);
         } else {
             $error .= '<br />' . $this->dm->lang['DM_process_noselection'] . '<br />';
@@ -172,7 +170,7 @@ class DocManagerBackend
         if (count($pids) <= 0) {
             $updateError .= $this->dm->lang['DM_tv_no_docs'] . '<br />';
         } else {
-            $tmplVars = array();
+            $tmplVars = [];
             foreach ($_POST as $key => $value) {
                 if (strpos($key, 'update_tv_') !== 0 || $value !== 'yes') {
                     continue;
@@ -198,7 +196,7 @@ class DocManagerBackend
                     $tmplvar = postv("tv" . $row['id']);
                 } else {
                     if (is_array(postv("tv" . $tvKeyName))) {
-                        $feature_insert = array();
+                        $feature_insert = [];
                         $lst = postv("tv" . $row['id']);
                         foreach ($lst as $feature_item) {
                             $feature_insert[count($feature_insert)] = $feature_item;
@@ -255,9 +253,7 @@ class DocManagerBackend
 
                     if (!isset($noUpdate)) {
                         if ($checkCount > 0) {
-                            $fields = array(
-                                'value' => db()->escape($tmplVars["$tvIndex"])
-                            );
+                            $fields = ['value' => db()->escape($tmplVars["$tvIndex"])];
                             db()->update(
                                 $fields,
                                 $tbl_site_tmplvar_contentvalues,
@@ -265,11 +261,11 @@ class DocManagerBackend
                             );
                             $updated = true;
                         } elseif (ltrim($tmplVars[(string)$tvIndex]) !== '') {
-                            $fields = array(
+                            $fields = [
                                 'value' => db()->escape($tmplVars["$tvIndex"]),
                                 'contentid' => db()->escape($docID),
                                 'tmplvarid' => db()->escape($tvValue)
-                            );
+                            ];
                             db()->insert($fields, $tbl_site_tmplvar_contentvalues);
                             $updated = true;
                         }
@@ -393,10 +389,10 @@ class DocManagerBackend
         switch (postv('setoption')) {
             case 1:
                 $fieldval = 'published';
-                $secondaryFields = array(
+                $secondaryFields = [
                     'publishedon' => postv('newvalue') == 1 ? time() : 0,
                     'publishedby' => postv('newvalue') == 1 ? $_SESSION['mgrInternalKey'] : 0
-                );
+                ];
                 $this->logDocumentChange('publish');
                 break;
             case 2:
@@ -417,10 +413,10 @@ class DocManagerBackend
                 break;
             case 6:
                 $fieldval = 'deleted';
-                $secondaryFields = array(
+                $secondaryFields = [
                     'deletedon' => postv('newvalue') == 1 ? time() : '0',
                     'deletedby' => postv('newvalue') == 1 ? $_SESSION['mgrInternalKey'] : '0'
-                );
+                ];
                 $this->logDocumentChange('delete');
                 break;
             default:
@@ -428,7 +424,7 @@ class DocManagerBackend
         }
 
         /* document date settings */
-        $dateval = array();
+        $dateval = [];
 
         if (postv('pubdate') != '') {
             $dateval['pub_date'] = evo()->toTimeStamp(postv('pubdate'));
@@ -444,7 +440,7 @@ class DocManagerBackend
         }
 
         /* document author settings */
-        $authorval = array();
+        $authorval = [];
         if (postv('author_createdby') <> 0) {
             $authorval['createdby'] = (int)postv('author_createdby');
         }
@@ -459,9 +455,7 @@ class DocManagerBackend
         $values = rtrim($pids, ' OR ');
 
         if ($pids !== '' && postv('newvalue') !== '') {
-            $fields = array(
-                $fieldval => (int)postv('newvalue')
-            );
+            $fields = [$fieldval => (int)postv('newvalue')];
             if (isset($secondaryFields) && is_array($secondaryFields)) {
                 $fields = array_merge($fields, $secondaryFields);
             }
@@ -499,7 +493,7 @@ class DocManagerBackend
     function processRange($pids, $column, $returnval = 1)
     {
         $tbl_site_content = evo()->getFullTableName('site_content');
-        $values = array();
+        $values = [];
         $error = '';
 
         if (trim($pids) <> '') {
@@ -596,13 +590,13 @@ class DocManagerBackend
         return $results;
     }
 
-    function getTemplateVarIds($tvNames = array(), $documentId, $ignoreList = array())
+    function getTemplateVarIds($tvNames = [], $documentId, $ignoreList = [])
     {
         $tbl_site_tmplvar_contentvalues = evo()->getFullTableName("site_tmplvar_contentvalues");
         if (count($tvNames) <= 0) {
-            return array();
+            return [];
         }
-        $output = array();
+        $output = [];
         foreach ($tvNames as $name => $value) {
             if (in_array($name, $ignoreList)) {
                 continue;

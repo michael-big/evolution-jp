@@ -7,7 +7,7 @@ if (!evo()->hasPermission('delete_document')) {
     alert()->dumpError();
 }
 
-$id = (int)$_REQUEST['id'];
+$id = (int)anyv('id');
 
 // check permissions on the document
 if (!$modx->checkPermissions($id)) {
@@ -21,7 +21,7 @@ if (db()->count($rs) != 1) {
 }
 $deltime = db()->getValue($rs);
 
-$children = array();
+$children = [];
 getChildren($id);
 
 // invoke OnBeforeDocFormUnDelete event
@@ -33,7 +33,7 @@ if ($params['enableProcess'] == false) {
     $modx->webAlertAndQuit("The undeletion process was interrupted by plugin.");
 }
 
-$field = array();
+$field = [];
 $field['deleted'] = '0';
 $field['deletedby'] = '0';
 $field['deletedon'] = '0';
@@ -60,7 +60,7 @@ evo()->invokeEvent("OnDocFormUnDelete", $params);
 $modx->clearCache();
 // finished emptying cache - redirect
 $pid = db()->getValue(db()->select('parent', '[+prefix+]site_content', "id='{$id}'"));
-$page = (isset($_GET['page'])) ? "&page={$_GET['page']}" : '';
+$page = getv('page') ? "&page=" . getv('page') : '';
 if ($pid !== '0') {
     $header = "Location: index.php?r=1&a=120&id={$pid}{$page}";
 } else {
@@ -90,9 +90,9 @@ function disp_access_permission_denied()
     global $_lang;
     include_once(MODX_MANAGER_PATH . 'actions/header.inc.php');
     ?>
-    <div class="sectionHeader"><?php echo $_lang['access_permissions']; ?></div>
+    <div class="sectionHeader"><?= $_lang['access_permissions'] ?></div>
     <div class="sectionBody">
-    <p><?php echo $_lang['access_permission_denied']; ?></p>
+    <p><?= $_lang['access_permission_denied'] ?></p>
     <?php
     include_once(MODX_MANAGER_PATH . 'actions/footer.inc.php');
     exit;

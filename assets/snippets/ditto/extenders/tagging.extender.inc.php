@@ -11,7 +11,7 @@ if (!defined('MODX_BASE_PATH') || strpos(str_replace('\\', '/', __FILE__), MODX_
 // Tagging Parameters
 // ---------------------------------------------------
 
-$landing = isset($tagDocumentID) ? $tagDocumentID : $modx->documentObject['id'];
+$landing = $tagDocumentID ?? $modx->documentObject['id'];
 /*
 	Param: tagDocumentID
 
@@ -24,7 +24,7 @@ $landing = isset($tagDocumentID) ? $tagDocumentID : $modx->documentObject['id'];
 	Default:
 	Current MODX Document
 */
-$source = isset($tagData) ? $tagData : '';
+$source = $tagData ?? '';
 /*
 	Param: tagData
 
@@ -37,7 +37,7 @@ $source = isset($tagData) ? $tagData : '';
 	Default:
 	[NULL]
 */
-$caseSensitive = isset($caseSensitive) ? $caseSensitive : 0;
+$caseSensitive = $caseSensitive ?? 0;
 /*
 	Param: caseSensitive
 
@@ -51,7 +51,7 @@ $caseSensitive = isset($caseSensitive) ? $caseSensitive : 0;
 	Default:
 	0 - off
 */
-$mode = isset($tagMode) ? $tagMode : 'onlyTags';
+$mode = $tagMode ?? 'onlyTags';
 /*
 	Param: tagMode
 
@@ -67,7 +67,7 @@ $mode = isset($tagMode) ? $tagMode : 'onlyTags';
 	Default:
 	"onlyTags"
 */
-$delimiter = isset($tagDelimiter) ? $tagDelimiter : ' ';
+$delimiter = $tagDelimiter ?? ' ';
 /*
 	Param: tagDelimiter
 
@@ -80,7 +80,7 @@ $delimiter = isset($tagDelimiter) ? $tagDelimiter : ' ';
 	Default:
 	" " - space
 */
-$displayDelimiter = isset($tagDisplayDelimiter) ? $tagDisplayDelimiter : $delimiter;
+$displayDelimiter = $tagDisplayDelimiter ?? $delimiter;
 /*
 	Param: tagDisplayDelimiter
 
@@ -93,7 +93,7 @@ $displayDelimiter = isset($tagDisplayDelimiter) ? $tagDisplayDelimiter : $delimi
 	Default:
 	&tagDelimiter
 */
-$sort = isset($tagSort) ? $tagSort : 1;
+$sort = $tagSort ?? 1;
 /*
 	Param: tagSort
 
@@ -107,7 +107,7 @@ $sort = isset($tagSort) ? $tagSort : 1;
 	Default:
 	1 - on
 */
-$displayMode = isset($tagDisplayMode) ? $tagDisplayMode : 1;
+$displayMode = $tagDisplayMode ?? 1;
 /*
 	Param: tagDisplayMode
 
@@ -137,7 +137,8 @@ $givenTags = !empty($tags) ? trim($tags) : false;
 	Default:
 	[NULL]
 */
-$tplTagLinks = !empty($tplTagLinks) ? template::fetch($tplTagLinks) : false;
+$templateInstance = new template();
+$tplTagLinks = !empty($tplTagLinks) ? $templateInstance->fetch($tplTagLinks) : false;
 /*
 	Param: tplTagLinks
 
@@ -199,13 +200,13 @@ if (!class_exists('tagging')) {
 
         function prepGivenTags($givenTags)
         {
-            global $_GET, $dittoID;
+            global $dittoID;
 
-            $getTags = !empty($_GET[$dittoID . 'tags']) ? trim($_GET[$dittoID . 'tags']) : false;
-            // Get tags from the $_GET array
+            $getTags = getv($dittoID . 'tags') ? trim(getv($dittoID . 'tags')) : false;
+            // Get tags from the getv array
 
-            $tags1 = array();
-            $tags2 = array();
+            $tags1 = [];
+            $tags2 = [];
 
             if ($getTags !== false) {
                 $tags1 = explode($this->delimiter, $getTags);
@@ -215,7 +216,7 @@ if (!class_exists('tagging')) {
                 $tags2 = explode($this->delimiter, $givenTags);
             }
 
-            $kTags = array();
+            $kTags = [];
             $tags = array_merge($tags1, $tags2);
             foreach ($tags as $tag) {
                 if (!empty($tag)) {
@@ -270,7 +271,7 @@ if (!class_exists('tagging')) {
             return $this->tagLinks($this->combineTags($this->source, $resource, true), $this->delimiter, $this->landing, $this->format);
         }
 
-        function parseTagData($tagData, $names = array())
+        function parseTagData($tagData, $names = [])
         {
             return explode(',', $tagData);
         }
@@ -280,13 +281,13 @@ if (!class_exists('tagging')) {
             if ($this->callback !== false) {
                 return call_user_func_array($this->callback, array('tagData' => $tagData, 'resource' => $resource, 'array' => $array));
             }
-            $tags = array();
+            $tags = [];
             foreach ($tagData as $source) {
                 if (!empty($resource[$source])) {
                     $tags[] = $resource[$source];
                 }
             }
-            $kTags = array();
+            $kTags = [];
             $tags = explode($this->delimiter, implode($this->delimiter, $tags));
             foreach ($tags as $tag) {
                 if (!empty($tag)) {
@@ -330,7 +331,7 @@ if (!class_exists('tagging')) {
                     $output .= ($format !== 'rss' && $format !== 'xml' && $format !== 'atom') ? $this->displayDelimiter : '';
                 }
             } else if ($format !== 'rss' && $format !== 'xml' && $format !== 'atom' && $this->displayMode == 2) {
-                $tagList = array();
+                $tagList = [];
                 foreach ($tags as $tag) {
                     $tagDocID = (!$tagID) ? $modx->documentObject['id'] : $tagID;
                     $url = ditto::buildURL("tags={$tag}&start=0", $tagDocID);

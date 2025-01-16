@@ -8,14 +8,14 @@ if (!evo()->hasPermission('view_eventlog')) {
 }
 
 global $_PAGE;
-$modx->manager->initPageViewState();
+manager()->initPageViewState();
 
 // get and save search string
 if (anyv('op') === 'reset') {
     $search = $query = '';
     $_PAGE['vs']['search'] = '';
 } else {
-    $search = $query = anyv('search', $_PAGE['vs']['search']);
+    $search = $query = anyv('search', array_get($_PAGE, 'vs.search'));
     if (!is_numeric($search)) {
         $search = db()->escape($query);
     }
@@ -23,7 +23,7 @@ if (anyv('op') === 'reset') {
 }
 
 // get & save listmode
-$listmode = anyv('listmode', $_PAGE['vs']['lm']);
+$listmode = anyv('listmode', array_get($_PAGE, 'vs.lm'));
 $_PAGE['vs']['lm'] = $listmode;
 
 // context menu
@@ -56,7 +56,7 @@ echo $cm->render();
     }
 
     var selectedItem;
-    var contextm = <?php echo $cm->getClientScriptObject()?>;
+    var contextm = <?= $cm->getClientScriptObject()?>;
 
     function showContentMenu(id, e) {
         selectedItem = id;
@@ -84,53 +84,66 @@ echo $cm->render();
     });
 </script>
 <form name="resource" method="post">
-    <input type="hidden" name="id" value="<?php echo $id ?>"/>
-    <input type="hidden" name="listmode" value="<?php echo $listmode ?>"/>
+    <input type="hidden" name="id" value="<?= $id ?? '' ?>"/>
+    <input type="hidden" name="listmode" value="<?= $listmode ?>"/>
     <input type="hidden" name="op" value=""/>
 
-    <h1><?php echo lang('eventlog_viewer') ?></h1>
+    <h1><?= lang('eventlog_viewer') ?></h1>
 
     <div id="actions">
         <ul class="actionButtons">
-            <li id="Button5" class="mutate"><a href="#"
-                                               onclick="documentDirty=false;document.location.href='index.php?a=2';"><img
-                        alt="icons_cancel"
-                        src="<?php echo $_style["icons_cancel"] ?>"/> <?php echo $_lang['cancel'] ?></a></li>
+            <li id="Button5" class="mutate">
+                <a href="#"
+                    onclick="documentDirty=false;document.location.href='index.php?a=2';"><img
+                    alt="icons_cancel"
+                    src="<?= $_style["icons_cancel"] ?>"/> <?= $_lang['cancel'] ?>
+                </a>
+            </li>
         </ul>
     </div>
 
     <div class="sectionBody">
         <!-- load modules -->
-        <p><?php echo $_lang['eventlog_msg'] ?></p>
+        <p><?= $_lang['eventlog_msg'] ?></p>
         <div class="actionButtons">
             <table border="0" style="width:100%">
                 <tr>
                     <td>
-                        <a
-                            href="index.php?a=116&cls=1"
-                        ><img
-                                src="<?php echo $_style["icons_delete_document"] ?>"
+                        <a href="index.php?a=116&cls=1">
+                            <img
+                                src="<?= $_style["icons_delete_document"] ?>"
                                 align="absmiddle"
-                            /> <?php echo lang('clear_log') ?></a>
+                            /> <?= lang('clear_log') ?>
+                        </a>
                     </td>
                     <td nowrap="nowrap">
                         <table border="0" style="float:right">
                             <tr>
-                                <td><?php echo lang('search') ?> </td>
-                                <td><input class="searchtext" name="search" type="text" size="15"
-                                           value="<?php echo $query ?>"/></td>
-                                <td><a class="primary" href="#" title="<?php echo lang('search') ?>"
-                                       onclick="searchResource();return false;"><img
-                                            src="<?php echo style('icons_save'); ?>"/><?php echo lang('go') ?>
-                                    </a></td>
-                                <td><a href="#" title="<?php echo $_lang['reset'] ?>"
-                                       onclick="resetSearch();return false;"><img
-                                            src="<?php echo style('icons_refresh'); ?>" style="display:inline;"/></a>
+                                <td><?= lang('search') ?> </td>
+                                <td>
+                                    <input class="searchtext" name="search" type="text" size="15"
+                                        value="<?= $query ?>"/>
                                 </td>
-                                <td><a href="#" title="<?php echo $_lang['list_mode'] ?>"
-                                       onclick="changeListMode();return false;"><img
-                                            src="<?php echo style('icons_table'); ?>"
-                                            style="display:inline;"/></a></td>
+                                <td>
+                                    <a class="primary" href="#" title="<?= lang('search') ?>"
+                                        onclick="searchResource();return false;">
+                                        <img src="<?= style('icons_save') ?>"/>
+                                        <?= lang('go') ?>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="#" title="<?= $_lang['reset'] ?>"
+                                        onclick="resetSearch();return false;">
+                                        <img src="<?= style('icons_refresh') ?>" style="display:inline;"/>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="#" title="<?= $_lang['list_mode'] ?>" onclick="changeListMode();return false;">
+                                        <img
+                                            src="<?= style('icons_table') ?>"
+                                            style="display:inline;"/>
+                                    </a>
+                                </td>
                             </tr>
                         </table>
                     </td>
@@ -160,7 +173,10 @@ echo $cm->render();
             $grd->itemClass = "gridItem";
             $grd->altItemClass = "gridAltItem";
             $grd->fields = "id,type,source,createdon,username";
-            $grd->columns = $_lang['event_id'] . ', ' . $_lang['type'] . " ," . $_lang['source'] . " ," . $_lang['date'] . " ," . $_lang['sysinfo_userid'];
+            $grd->columns = sprintf(
+                '%s, %s, %s, %s, %s',
+                $_lang['event_id'], $_lang['type'], $_lang['source'], $_lang['date'], $_lang['sysinfo_userid']
+            );
             $grd->colWidths = "20,34,,150";
             $grd->columnHeaderStyle = 'text-align:center;';
             $grd->colAligns = "right,center,,,center,center";
@@ -175,7 +191,7 @@ echo $cm->render();
             if ($listmode == '1') {
                 $grd->pageSize = 0;
             }
-            if (isset($_REQUEST['op']) && $_REQUEST['op'] == 'reset') {
+            if (anyv('op') == 'reset') {
                 $grd->pageNumber = 1;
             }
             // render grid

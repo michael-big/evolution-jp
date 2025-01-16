@@ -364,7 +364,7 @@ if (is_array($evtOut)) {
                                 <?= isSelectedTreeSortDir('ASC') ?>
                             ><?= $_lang['sort_asc'] ?></option>
                         </select>
-                        <input type="hidden" name="dt" value="<?= htmlspecialchars($_REQUEST['dt']) ?>"/>
+                        <input type="hidden" name="dt" value="<?= htmlspecialchars(anyv('dt', '')) ?>"/>
                     </td>
                     <td width="1%"><a
                         href="#"
@@ -531,7 +531,7 @@ EOT;
         return $tpl;
     }
 
-    $ph = array();
+    $ph = [];
     $ph['itemEditDoc'] = itemEditDoc(); // edit
     $ph['itemDocList'] = itemDocList(); // Resource list
     $ph['itemNewDoc'] = itemNewDoc(); // new Resource

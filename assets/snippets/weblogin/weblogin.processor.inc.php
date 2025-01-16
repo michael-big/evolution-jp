@@ -11,7 +11,7 @@ $tbl_web_user_settings = evo()->getFullTableName('web_user_settings');
 
 # process password activation
 if ($isPWDActivate == 1) {
-    $uid = db()->escape($_REQUEST['uid']);
+    $uid = db()->escape(anyv('uid'));
 
     $rs = db()->select('*', $tbl_web_users, "id='{$uid}'");
     $limit = db()->count($rs);
@@ -26,7 +26,7 @@ if ($isPWDActivate == 1) {
     if (!isset($expireTime)) {
         $expireTime = 60 * 60 * 24;
     }
-    if ($token !== $_REQUEST['token']) {
+    if ($token !== anyv('token')) {
         if (!$actInvalidKey)
             $output = webLoginAlert("Invalid password activation key. Your password was NOT activated.");
         else $modx->sendRedirect($actInvalidKey);
@@ -41,7 +41,7 @@ if ($isPWDActivate == 1) {
         return;
     }
     // activate new password
-    $f = array();
+    $f = [];
     $f['password'] = md5($newpwd);
     $f['cachepwd'] = '';
     $rs = db()->update($f, $tbl_web_users, "id='{$uid}'");
@@ -69,7 +69,7 @@ if ($isPWDActivate == 1) {
 
 # process password reminder
 if ($isPWDReminder == 1) {
-    $email = $_POST['txtwebemail'];
+    $email = postv('txtwebemail');
     if (isset($reminder_message)) {
         if (preg_match('@^[1-9[0-9]*$@', $reminder_message))
             $message = $modx->getField('content', $reminder_message);
@@ -94,7 +94,7 @@ if ($isPWDReminder == 1) {
         $row = db()->getRow($ds);
         $uid = $row['id'];
         //save new password
-        $f = array();
+        $f = [];
         $requestedon = time();
         $f['cachepwd'] = "{$newpwd}|{$token}|{$requestedon}";
         db()->update($f, $tbl_web_users, "id='{$uid}'");
@@ -104,7 +104,7 @@ if ($isPWDReminder == 1) {
         $url = $modx->makeURL($modx->documentIdentifier, '', "webloginmode=actp&uid={$uid}&token={$token}", 'full');
         $modx->config['xhtml_urls'] = $xhtmlUrlSetting;
         // replace placeholders and send email
-        $ph = array();
+        $ph = [];
         $ph['uid'] = $uid;
         $ph['username'] = $row['username'];
         $ph['password'] = $newpwd;
@@ -151,7 +151,7 @@ if ($isLogOut == 1) {
     $username = $_SESSION['webShortname'];
 
     // invoke OnBeforeWebLogout event
-    $v = array();
+    $v = [];
     $v['userid'] = $internalKey;
     $v['username'] = $username;
     evo()->invokeEvent('OnBeforeWebLogout', $v);
@@ -179,7 +179,7 @@ if ($isLogOut == 1) {
     }
 
     // invoke OnWebLogout event
-    $v = array();
+    $v = [];
     $v['userid'] = $internalKey;
     $v['username'] = $username;
     evo()->invokeEvent('OnWebLogout', $v);
@@ -193,13 +193,13 @@ if ($isLogOut == 1) {
 
 # process login
 
-$username = db()->escape(htmlspecialchars($_POST['username'], ENT_QUOTES));
-$givenPassword = db()->escape($_POST['password']);
-$captcha_code = isset($_POST['captcha_code']) ? $_POST['captcha_code'] : '';
-$rememberme = $_POST['rememberme'];
+$username = db()->escape(htmlspecialchars(postv('username'), ENT_QUOTES));
+$givenPassword = db()->escape(postv('password'));
+$captcha_code = postv('captcha_code', '');
+$rememberme = postv('rememberme');
 
 // invoke OnBeforeWebLogin event
-$v = array();
+$v = [];
 $v['username'] = $username;
 $v['userpassword'] = $givenPassword;
 $v['rememberme'] = $rememberme;
@@ -249,7 +249,7 @@ if ($failedlogins >= $modx->config['failed_login_attempts'] && $blockeduntildate
 
 if ($failedlogins >= $modx->config['failed_login_attempts'] && $blockeduntildate < time()) {
     // blocked due to number of login errors, but get to try again
-    $f = array();
+    $f = [];
     $f['failedlogincount'] = '0';
     $f['blockeduntil'] = time() - 1;
     $ds = db()->update($f, $tbl_web_user_attributes, "internalKey='{$internalKey}'");
@@ -328,13 +328,13 @@ if (isset($newloginerror) && $newloginerror == 1) {
     $failedlogins += $newloginerror;
     if ($failedlogins >= $modx->config['failed_login_attempts']) //increment the failed login counter, and block!
     {
-        $f = array();
+        $f = [];
         $f['failedlogincount'] = $failedlogins;
         $f['blocked'] = 1;
         $f['blockeduntil'] = time() + ($modx->config['blocked_minutes'] * 60);
     } else //increment the failed login counter
     {
-        $f = array();
+        $f = [];
         $f['failedlogincount'] = $failedlogins;
     }
     $ds = db()->update($f, $tbl_web_user_attributes, "internalKey='{$internalKey}'");
@@ -370,7 +370,7 @@ $from = array('[+prefix+]web_groups ug');
 $from[] = 'INNER JOIN [+prefix+]webgroup_access uga ON uga.webgroup=ug.webgroup';
 $ds = db()->select('uga.documentgroup', $from, "ug.webuser='{$internalKey}'");
 $i = 0;
-$dg = array();
+$dg = [];
 while ($row = db()->getRow($ds, 'num')) {
     $i++;
     $dg[$i] = $row[0];
@@ -410,7 +410,7 @@ if (!$ok) // check if a login home id page was set
 // update active users list if redirectinq to another page
 if ($id != $modx->documentIdentifier) {
     $_SESSION['ip'] = real_ip();
-    $itemid = isset($_REQUEST['id']) ? $_REQUEST['id'] : 'NULL';
+    $itemid = anyv('id');
     $lasthittime = time();
     $a = 998;
     if ($a != 1) {
@@ -429,14 +429,14 @@ $tmp = array(
     "userid" => $internalKey,
     "username" => $username,
     "userpassword" => $givenPassword,
-    "rememberme" => $_POST['rememberme']
+    "rememberme" => postv('rememberme')
 );
 evo()->invokeEvent("OnWebLogin", $tmp);
 
 // redirect
-if (isset($_REQUEST['refurl']) && !empty($_REQUEST['refurl'])) {
+if (isset($_REQUEST['refurl']) && !empty(anyv('refurl'))) {
     // last accessed page
-    $targetPageId = $_REQUEST['refurl'];
+    $targetPageId = anyv('refurl');
     if (strpos($targetPageId, 'q=') !== false) {
         $urlPos = strpos($targetPageId, 'q=') + 2;
         $alias = substr($targetPageId, $urlPos);
@@ -447,7 +447,7 @@ if (isset($_REQUEST['refurl']) && !empty($_REQUEST['refurl'])) {
         $modx->config['xhtml_urls'] = '0';
         $url = preserveUrl($targetPageId);
     } else {
-        $url = $_REQUEST['refurl'];
+        $url = anyv('refurl');
     }
     $modx->sendRedirect($url);
 } else // login home page

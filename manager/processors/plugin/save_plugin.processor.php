@@ -8,32 +8,32 @@ if (!evo()->hasPermission('save_plugin')) {
     alert()->dumpError();
 }
 
-if (isset($_POST['id']) && preg_match('@^[0-9]+$@', $_POST['id'])) {
-    $id = $_POST['id'];
+if (preg_match('@^[0-9]+$@', postv('id'))) {
+    $id = postv('id');
 }
-$name = db()->escape(trim($_POST['name']));
-$description = db()->escape($_POST['description']);
-$locked = $_POST['locked'] == 'on' ? '1' : '0';
-$plugincode = db()->escape($_POST['post']);
-$properties = db()->escape($_POST['properties']);
-$disabled = $_POST['disabled'] == "on" ? '1' : '0';
-$moduleguid = db()->escape($_POST['moduleguid']);
-$sysevents = $_POST['sysevents'];
+$name = db()->escape(trim(postv('name')));
+$description = db()->escape(postv('description'));
+$locked = postv('locked') == 'on' ? '1' : '0';
+$plugincode = db()->escape(postv('post'));
+$properties = db()->escape(postv('properties'));
+$disabled = postv('disabled') == "on" ? '1' : '0';
+$moduleguid = db()->escape(postv('moduleguid'));
+$sysevents = postv('sysevents');
 if (empty($sysevents)) {
     $sysevents[] = 90;
 } // Default OnWebPageInit
 
 //Kyle Jaebker - added category support
-if (empty($_POST['newcategory']) && $_POST['categoryid'] > 0) {
-    $category = db()->escape($_POST['categoryid']);
-} elseif (empty($_POST['newcategory']) && $_POST['categoryid'] <= 0) {
+if (!postv('newcategory') && postv('categoryid') > 0) {
+    $category = db()->escape(postv('categoryid'));
+} elseif (!postv('newcategory') && postv('categoryid') <= 0) {
     $category = '0';
 } else {
-    $catCheck = $modx->manager->checkCategory(db()->escape($_POST['newcategory']));
+    $catCheck = manager()->checkCategory(db()->escape(postv('newcategory')));
     if ($catCheck) {
         $category = $catCheck;
     } else {
-        $category = $modx->manager->newCategory($_POST['newcategory']);
+        $category = manager()->newCategory(postv('newcategory'));
     }
 }
 
@@ -41,7 +41,7 @@ if ($name == '') {
     $name = 'Untitled plugin';
 }
 
-switch ($_POST['mode']) {
+switch (postv('mode')) {
     case '101':
 
         // invoke OnBeforePluginFormSave event
@@ -56,18 +56,18 @@ switch ($_POST['mode']) {
             $rs = db()->select('COUNT(id)', '[+prefix+]site_plugins', "name='{$name}' AND disabled='0'");
             $count = db()->getValue($rs);
             if ($count > 0) {
-                $modx->manager->saveFormValues(101);
+                manager()->saveFormValues(101);
                 $modx->event->alert(sprintf($_lang['duplicate_name_found_general'], $_lang['plugin'], $name));
 
                 // prepare a few variables prior to redisplaying form...
-                $content = array();
+                $content = [];
                 $_REQUEST['a'] = '101';
                 $_GET['a'] = '101';
-                $_GET['stay'] = $_POST['stay'];
+                $_GET['stay'] = postv('stay');
                 $content = array_merge($content, $_POST);
                 $content['locked'] = $locked;
-                $content['plugincode'] = $_POST['post'];
-                $content['category'] = $_POST['categoryid'];
+                $content['plugincode'] = postv('post');
+                $content['category'] = postv('categoryid');
                 $content['disabled'] = $disabled;
                 $content['properties'] = $properties;
                 $content['moduleguid'] = $moduleguid;
@@ -90,7 +90,7 @@ switch ($_POST['mode']) {
         }
 
         // save event listeners
-        saveEventListeners($newid, $sysevents, $_POST['mode']);
+        saveEventListeners($newid, $sysevents, postv('mode'));
 
         // invoke OnPluginFormSave event
         $tmp = array(
@@ -102,9 +102,9 @@ switch ($_POST['mode']) {
         // empty cache
         $modx->clearCache(); // first empty the cache
         // finished emptying cache - redirect
-        if ($_POST['stay'] != '') {
-            $a = ($_POST['stay'] == '2') ? "102&id={$newid}" : "101";
-            $header = "Location: index.php?a={$a}&stay=" . $_POST['stay'];
+        if (postv('stay') != '') {
+            $a = (postv('stay') == '2') ? "102&id={$newid}" : "101";
+            $header = "Location: index.php?a={$a}&stay=" . postv('stay');
         } else {
             $header = "Location: index.php?a=76";
         }
@@ -124,18 +124,18 @@ switch ($_POST['mode']) {
             $rs = db()->select('COUNT(*)', '[+prefix+]site_plugins',
                 "name='{$name}' AND id!='{$id}' AND disabled='0'");
             if (db()->getValue($rs) > 0) {
-                $modx->manager->saveFormValues();
+                manager()->saveFormValues();
                 $modx->event->alert(sprintf($_lang['duplicate_name_found_general'], $_lang['plugin'], $name));
 
                 // prepare a few variables prior to redisplaying form...
-                $content = array();
+                $content = [];
                 $_REQUEST['a'] = '102';
                 $_GET['a'] = '102';
-                $_GET['stay'] = $_POST['stay'];
+                $_GET['stay'] = postv('stay');
                 $content = array_merge($content, $_POST);
                 $content['locked'] = $locked;
-                $content['plugincode'] = $_POST['post'];
-                $content['category'] = $_POST['categoryid'];
+                $content['plugincode'] = postv('post');
+                $content['category'] = postv('categoryid');
                 $content['disabled'] = $disabled;
                 $content['properties'] = $properties;
                 $content['moduleguid'] = $moduleguid;
@@ -155,7 +155,7 @@ switch ($_POST['mode']) {
             echo "\$rs not set! Edited plugin not saved!";
         } else {
             // save event listeners
-            saveEventListeners($id, $sysevents, $_POST['mode']);
+            saveEventListeners($id, $sysevents, postv('mode'));
 
             // invoke OnPluginFormSave event
             $tmp = array(
@@ -167,9 +167,9 @@ switch ($_POST['mode']) {
             // empty cache
             $modx->clearCache(); // first empty the cache
             // finished emptying cache - redirect
-            if ($_POST['stay'] != '') {
-                $a = ($_POST['stay'] == '2') ? "102&id={$id}" : "101";
-                $header = "Location: index.php?a={$a}&stay=" . $_POST['stay'];
+            if (postv('stay') != '') {
+                $a = (postv('stay') == '2') ? "102&id={$id}" : "101";
+                $header = "Location: index.php?a={$a}&stay=" . postv('stay');
             } else {
                 $header = 'Location: index.php?a=76';
             }

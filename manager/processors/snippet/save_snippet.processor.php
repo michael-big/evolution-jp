@@ -6,11 +6,11 @@ if (!evo()->hasPermission('save_snippet')) {
     alert()->setError(3);
     alert()->dumpError();
 }
-$id = (isset($_POST['id']) && preg_match('@^[0-9]+$@', $_POST['id'])) ? $_POST['id'] : 0;
-$name = db()->escape(trim($_POST['name']));
-$description = db()->escape($_POST['description']);
-$locked = $_POST['locked'] == 'on' ? 1 : 0;
-$snippet = db()->escape(trim($_POST['post']));
+$id = preg_match('@^[0-9]+$@', postv('id')) ? postv('id') : 0;
+$name = db()->escape(trim(postv('name')));
+$description = db()->escape(postv('description'));
+$locked = postv('locked') == 'on' ? 1 : 0;
+$snippet = db()->escape(trim(postv('post')));
 $tbl_site_snippets = evo()->getFullTableName('site_snippets');
 
 // strip out PHP tags from snippets
@@ -23,22 +23,22 @@ if (strncmp($snippet, '<?', 2) == 0) {
         $snippet = substr($snippet, 0, -2);
     }
 }
-$properties = db()->escape($_POST['properties']);
-$moduleguid = db()->escape($_POST['moduleguid']);
-$sysevents = $_POST['sysevents'];
+$properties = db()->escape(postv('properties'));
+$moduleguid = db()->escape(postv('moduleguid'));
+$sysevents = postv('sysevents');
 
 //Kyle Jaebker - added category support
-if (empty($_POST['newcategory']) && 0 < $_POST['categoryid']) {
-    $categoryid = db()->escape($_POST['categoryid']);
-} elseif (empty($_POST['newcategory']) && $_POST['categoryid'] <= 0) {
+if (empty(postv('newcategory')) && 0 < postv('categoryid')) {
+    $categoryid = db()->escape(postv('categoryid'));
+} elseif (empty(postv('newcategory')) && postv('categoryid') <= 0) {
     $categoryid = 0;
 } else {
-    $catCheck = $modx->manager->checkCategory(db()->escape($_POST['newcategory']));
+    $catCheck = manager()->checkCategory(db()->escape(postv('newcategory')));
 
     if ($catCheck) {
         $categoryid = $catCheck;
     } else {
-        $categoryid = $modx->manager->newCategory($_POST['newcategory']);
+        $categoryid = manager()->newCategory(postv('newcategory'));
     }
 }
 
@@ -55,12 +55,12 @@ $rs = db()->select('COUNT(id)', '[+prefix+]site_snippets', $where);
 $count = db()->getValue($rs);
 if ($count > 0) {
     $msg = sprintf($_lang['duplicate_name_found_general'], $_lang['snippet'], $name);
-    $modx->manager->saveFormValues(23);
+    manager()->saveFormValues(23);
     $modx->webAlertAndQuit($msg, 'index.php?a=23');
     exit;
 }
 
-switch ($_POST['mode']) {
+switch (postv('mode')) {
     case '23':
         // invoke OnBeforeSnipFormSave event
         $tmp = array(
@@ -70,7 +70,7 @@ switch ($_POST['mode']) {
         evo()->invokeEvent('OnBeforeSnipFormSave', $tmp);
 
         //do stuff to save the new doc
-        $field = array();
+        $field = [];
         $field['name'] = $name;
         $field['description'] = $description;
         $field['snippet'] = $snippet;
@@ -93,9 +93,9 @@ switch ($_POST['mode']) {
         // empty cache
         $modx->clearCache(); // first empty the cache
         // finished emptying cache - redirect
-        if ($_POST['stay'] != '') {
-            $a = ($_POST['stay'] == '2') ? "22&id={$newid}" : '23';
-            $header = "Location: index.php?a={$a}&stay={$_POST['stay']}";
+        if (postv('stay') != '') {
+            $a = (postv('stay') == '2') ? "22&id={$newid}" : '23';
+            $header = "Location: index.php?a={$a}&stay=" . postv('stay');
         } else {
             $header = 'Location: index.php?a=76';
         }
@@ -111,7 +111,7 @@ switch ($_POST['mode']) {
         evo()->invokeEvent('OnBeforeSnipFormSave', $tmp);
 
         //do stuff to save the edited doc
-        $field = array();
+        $field = [];
         $field['name'] = $name;
         $field['description'] = $description;
         $field['snippet'] = $snippet;
@@ -133,11 +133,11 @@ switch ($_POST['mode']) {
         evo()->invokeEvent('OnSnipFormSave', $tmp);
         // empty cache
         $modx->clearCache(); // first empty the cache
-        //if($_POST['runsnippet']) run_snippet($snippet);
+        //if(postv('runsnippet')) run_snippet($snippet);
         // finished emptying cache - redirect
-        if ($_POST['stay'] != '') {
-            $a = ($_POST['stay'] == '2') ? "22&id={$id}" : '23';
-            $header = "Location: index.php?a={$a}&stay={$_POST['stay']}";
+        if (postv('stay') != '') {
+            $a = (postv('stay') == '2') ? "22&id={$id}" : '23';
+            $header = "Location: index.php?a={$a}&stay=" . postv('stay');
         } else {
             $header = 'Location: index.php?a=76';
         }

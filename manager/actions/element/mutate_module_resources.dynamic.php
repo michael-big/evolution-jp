@@ -8,18 +8,14 @@ if (!evo()->hasPermission('edit_module')) {
     alert()->dumpError();
 }
 
-if (isset($_REQUEST['id'])) {
-    $id = (int)$_REQUEST['id'];
-} else {
-    $id = 0;
-}
+$id = anyv('id', 0);
 
 // Get table names (alphabetical)
 $tbl_site_module_depobj = evo()->getFullTableName('site_module_depobj');
 $tbl_site_plugins = evo()->getFullTableName('site_plugins');
 $tbl_site_snippets = evo()->getFullTableName('site_snippets');
 
-$modx->manager->initPageViewState();
+manager()->initPageViewState();
 
 // check to see the  editor isn't locked
 $rs = db()->select('internalKey, username', '[+prefix+]active_users', "action=108 AND id='{$id}'");
@@ -42,12 +38,12 @@ if (!is_numeric($id)) {
 }
 
 // take action
-switch ($_REQUEST['op']) {
+switch (anyv('op')) {
     case 'add':
-        $opids = explode(',', $_REQUEST['newids']);
+        $opids = explode(',', anyv('newids'));
         if (count($opids) > 0) {
             // 1-snips, 2-tpls, 3-tvs, 4-chunks, 5-plugins, 6-docs
-            $rt = strtolower($_REQUEST["rt"]);
+            $rt = strtolower(anyv('rt'));
             if ($rt === 'chunk') {
                 $type = 10;
             }
@@ -66,7 +62,7 @@ switch ($_REQUEST['op']) {
             if ($rt === 'tv') {
                 $type = 60;
             }
-            $v = array();
+            $v = [];
             foreach ($opids as $opid) {
                 $opid = intval($opid);
                 $v[] = "('{$id}','{$opid}','{$type}')";
@@ -84,7 +80,7 @@ switch ($_REQUEST['op']) {
         }
         break;
     case 'del':
-        $opids = $_REQUEST['depid'];
+        $opids = anyv('depid');
         for ($i = 0, $iMax = count($opids); $i < $iMax; $i++) {
             $opids[$i] = (int)$opids[$i]; // convert ids to numbers
         }
@@ -93,8 +89,8 @@ switch ($_REQUEST['op']) {
         if ($ds) {
             // loop through resources and look for plugins and snippets
             $i = 0;
-            $plids = array();
-            $snid = array();
+            $plids = [];
+            $snid = [];
             while ($row = db()->getRow($ds)) {
                 if ($row['type'] == '30') {
                     $plids[$i] = $row['resource'];
@@ -143,14 +139,13 @@ if ($limit < 1) {
 
 $content = db()->getRow($rs);
 $_SESSION['itemname'] = $content['name'];
-if ($content['locked'] == 1 && $_SESSION['mgrRole'] != 1) {
+if ($content['locked'] == 1 && !manager()->isAdmin()) {
     alert()->setError(3);
     alert()->dumpError();
 }
 
 ?>
 <script type="text/javascript">
-
     function removeDependencies() {
         if (confirm("<?= $_lang['confirm_delete_record'] ?>")) {
             documentDirty = false;
@@ -211,17 +206,17 @@ if ($content['locked'] == 1 && $_SESSION['mgrRole'] != 1) {
 </script>
 
 <form name="mutate" method="post" action="index.php">
-    <input type="hidden" name="a" value="113"/>
-    <input type="hidden" name="op" value=""/>
-    <input type="hidden" name="rt" value=""/>
-    <input type="hidden" name="newids" value=""/>
-    <input type="hidden" name="id" value="<?= $content['id'] ?>"/>
+    <input type="hidden" name="a" value="113" />
+    <input type="hidden" name="op" value="" />
+    <input type="hidden" name="rt" value="" />
+    <input type="hidden" name="newids" value="" />
+    <input type="hidden" name="id" value="<?= $content['id'] ?>" />
     <h1><?= $_lang['module_resource_title'] ?></h1>
 
     <div id="actions">
         <ul class="actionButtons">
             <li class="mutate"><a href="index.php?a=106"><img
-                        src="<?= $_style["icons_cancel"] ?>"/> <?= $_lang['cancel'] ?></a>
+                        src="<?= $_style["icons_cancel"] ?>" /> <?= $_lang['cancel'] ?></a>
         </ul>
     </div>
 
@@ -229,14 +224,14 @@ if ($content['locked'] == 1 && $_SESSION['mgrRole'] != 1) {
         <div class="sectionHeader"><?= $content["name"] . " - " . $_lang['module_resource_title'] ?></div>
         <div class="sectionBody">
             <p><img src="<?= $_style["icons_modules"] ?>" alt=""
-                    align="left"/><?= $_lang['module_resource_msg'] ?></p>
-            <br/>
+                    align="left" /><?= $_lang['module_resource_msg'] ?></p>
+            <br />
             <!-- Dependencies -->
             <ul class="actionButtons">
                 <li><a href="#" onclick="addSnippet();return false;"><img
-                            src="<?= $_style["icons_add"] ?>"/> <?= $_lang['add_snippet'] ?></a></li>
+                            src="<?= $_style["icons_add"] ?>" /> <?= $_lang['add_snippet'] ?></a></li>
                 <li><a href="#" onclick="addPlugin();return false;"><img
-                            src="<?= $_style["icons_add"] ?>"/> <?= $_lang['add_plugin'] ?></a></li>
+                            src="<?= $_style["icons_add"] ?>" /> <?= $_lang['add_plugin'] ?></a></li>
             </ul>
             <?php
             $sql = "SELECT smd.id,COALESCE(ss.name,sp.name) as 'name'," .
@@ -268,7 +263,7 @@ if ($content['locked'] == 1 && $_SESSION['mgrRole'] != 1) {
             ?>
             <ul class="actionButtons">
                 <li><a style="margin-bottom:10px;" href="#" onclick="removeDependencies();return false;"><img
-                            src="<?= $_style["icons_delete_document"] ?>"/> <?= $_lang['remove'] ?>
+                            src="<?= $_style["icons_delete_document"] ?>" /> <?= $_lang['remove'] ?>
                     </a></li>
             </ul>
         </div>

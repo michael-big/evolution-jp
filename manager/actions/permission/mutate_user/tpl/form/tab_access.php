@@ -1,8 +1,8 @@
-<h2 class="tab"><?php echo lang('access_permissions') ?></h2>
-<div class="sectionHeader"><?php echo lang('access_permissions'); ?></div>
+<h2 class="tab"><?= lang('access_permissions') ?></h2>
+<div class="sectionHeader"><?= lang('access_permissions') ?></div>
 <div class="sectionBody">
     <?php
-    $groupsarray = array();
+    $groupsarray = [];
     if (evo()->input_get('a') == 12) { // only do this bit if the user is being edited
         $rs = db()->select(
             '*'
@@ -15,8 +15,8 @@
     }
 
     // retain selected doc groups between post
-    if (is_array($_POST['user_groups'])) {
-        foreach ($_POST['user_groups'] as $v) {
+    if (is_array(postv('user_groups'))) {
+        foreach (postv('user_groups') as $v) {
             $groupsarray[] = $v;
         }
     }
@@ -28,7 +28,7 @@
         $tpl = '<label><input type="checkbox" name="user_groups[]" value="[+id+]" [+checked+] />[+name+]</label><br />';
         while ($row = db()->getRow($rs)) {
             $src = $tpl;
-            $ph = array();
+            $ph = [];
             $ph['id'] = $row['id'];
             $ph['checked'] = in_array($row['id'], $groupsarray) ? 'checked="checked"' : '';
             $ph['name'] = $row['name'];

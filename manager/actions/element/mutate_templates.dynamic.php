@@ -46,7 +46,7 @@ if (id()) {
 
     <form name="mutate" id="mutate" method="POST" action="index.php" enctype="multipart/form-data">
         <?php
-        $tmp = array('id' => id());
+        $tmp = ['id' => id()];
         $evtOut = evo()->invokeEvent('OnTempFormPrerender', $tmp);
         if (is_array($evtOut)) {
             echo implode('', $evtOut);
@@ -62,7 +62,7 @@ if (id()) {
                 <?php if (evo()->hasPermission('save_template')) : ?>
                     <li id="Button1" class="mutate">
                         <a href="#"
-                           onclick="jQuery('#templatesPane select').prop('disabled',false);documentDirty=false;jQuery('#Button1').hide();jQuery('input,textarea,select').addClass('readonly');jQuery('#mutate').submit();"><img
+                            onclick="jQuery('#templatesPane select').prop('disabled',false);documentDirty=false;jQuery('#Button1').hide();jQuery('input,textarea,select').addClass('readonly');jQuery('#mutate').submit();"><img
                                 src="<?= style('icons_save') ?>"/> <?= lang('update') ?>
                         </a>
                         <span class="and"> + </span>
@@ -77,29 +77,25 @@ if (id()) {
                 <?php
                 if (getv('a') == 16) {
                     if (evo()->hasPermission('new_template')) {
-                        echo evo()->manager->ab(
-                            array(
-                                'onclick' => 'duplicaterecord();',
-                                'icon' => style('icons_resource_duplicate'),
-                                'label' => lang('duplicate')
-                            )
-                        );
+                        echo evo()->manager->ab([
+                            'onclick' => 'duplicaterecord();',
+                            'icon' => style('icons_resource_duplicate'),
+                            'label' => lang('duplicate')
+                        ]);
                     }
                     if (evo()->hasPermission('delete_template')) {
-                        echo evo()->manager->ab(
-                            array(
-                                'onclick' => 'deletedocument();',
-                                'icon' => style('icons_delete_document'),
-                                'label' => lang('delete')
-                            )
-                        );
+                        echo evo()->manager->ab([
+                            'onclick' => 'deletedocument();',
+                            'icon' => style('icons_delete_document'),
+                            'label' => lang('delete')
+                        ]);
                     }
                 }
-                echo evo()->manager->ab(array(
+                echo evo()->manager->ab([
                     'onclick' => "document.location.href='index.php?a=76';",
                     'icon' => style('icons_cancel'),
                     'label' => lang('cancel')
-                ));
+                ]);
                 ?>
             </ul>
         </div>
@@ -111,15 +107,16 @@ if (id()) {
                     <div style="margin-bottom:10px;">
                         <b><?= lang('template_name') ?></b>
                         <input name="templatename" type="text" maxlength="100"
-                               value="<?= evo()->hsc(template('templatename')) ?>" class="inputBox"
-                               style="width:200px;">
+                            value="<?= evo()->hsc(template('templatename')) ?>"
+                            class="inputBox"
+                            style="width:200px;">
                         <?php
                         $rs = db()->select(
                             '*',
                             '[+prefix+]site_templates',
                             id() ? "parent!='" . id() . "'" : ''
                         );
-                        $parent = array();
+                        $parent = [];
                         while ($row = db()->getRow($rs)) {
                             if (id() == $row['id']) {
                                 continue;
@@ -130,7 +127,7 @@ if (id()) {
                             );
                         }
                         $tpl = '<option value="[+id+]" [+selected+]>[+templatename+]([+id+])</option>';
-                        $option = array();
+                        $option = [];
                         foreach ($parent as $ph) {
                             $ph['selected'] = template('parent') == $ph['id'] ? 'selected' : '';
                             $option[] = evo()->parseText($tpl, $ph);
@@ -147,8 +144,8 @@ if (id()) {
                         $parent = getParentValues(template('parent'));
                     }
                     if (!empty($parent)) {
-                        $head = $parent['head'];
-                        $foot = $parent['foot'];
+                        $head = $parent['head'] ?? '';
+                        $foot = $parent['foot'] ?? '';
                     }
                     ?>
                     <div style="width:100%;position:relative">
@@ -160,7 +157,7 @@ if (id()) {
                             echo $head;
                         } ?>
                         <textarea dir="ltr" name="content" class="phptextarea"
-                                  style="width:100%; height: 370px;"><?= evo()->hsc(template('content')) ?></textarea>
+                            style="width:100%; height: 370px;"><?= evo()->hsc(template('content')) ?></textarea>
                         <?php if (isset($foot)) {
                             echo $foot;
                         } ?>
@@ -193,16 +190,21 @@ if (id()) {
                             </td>
                         </tr>
                         <tr id="newcategry" style="display:none;">
-                            <th valign="top" style="padding-top:5px;"><?= lang('new_category') ?>:</th>
-                            <td valign="top" style="padding-top:5px;"><input name="newcategory" type="text"
-                                                                             maxlength="45"
-                                                                             value="<?= template('newcategory', '') ?>"
-                                                                             class="inputBox" style="width:300px;"></td>
+                            <th valign="top" style="padding-top:5px;">
+                                <?= lang('new_category') ?>:
+                            </th>
+                            <td valign="top" style="padding-top:5px;">
+                                <input name="newcategory"
+                                    type="text"
+                                    maxlength="45"
+                                    value="<?= template('newcategory', '') ?>"
+                                    class="inputBox" style="width:300px;">
+                            </td>
                         </tr>
                         <tr>
                             <th><?= lang('template_desc') ?>:&nbsp;&nbsp;</th>
                             <td><textarea name="description"
-                                          style="padding:0;height:4em;"><?= evo()->hsc(template('description')) ?></textarea>
+                                    style="padding:0;height:4em;"><?= evo()->hsc(template('description')) ?></textarea>
                             </td>
                         </tr>
                         <?php if (evo()->hasPermission('save_template') == 1) { ?>
@@ -225,7 +227,7 @@ if (id()) {
                 <?php
                 if (getv('a') == '16') {
                     $rs = db()->select(
-                        array(
+                        [
                             'name' => 'tv.name',
                             'id' => 'tv.id',
                             'tplid' => 'tpl.templateid',
@@ -235,13 +237,12 @@ if (id()) {
                                 lang('no_category')
                             ),
                             'desc' => 'tv.description'
-
-                        ),
-                        array(
+                        ],
+                        [
                             '[+prefix+]site_tmplvar_templates tpl',
                             'INNER JOIN [+prefix+]site_tmplvars tv ON tv.id=tpl.tmplvarid',
                             'LEFT JOIN [+prefix+]categories cat ON tv.category=cat.id',
-                        ),
+                        ],
                         sprintf("tpl.templateid='%s'", id()),
                         'tpl.rank, tv.rank, tv.id'
                     );
@@ -359,7 +360,7 @@ function getParentValues($parent)
         }
     }
     if ($total != 1 || strpos($p->content, '[*content*]') === false) {
-        return array();
+        return [];
     }
 
     $content = explode('[*content*]', $p->content, 2);
@@ -382,7 +383,7 @@ function getParentValues($parent)
 
 function template($key, $default = null)
 {
-    static $tplObject = array();
+    static $tplObject = [];
     if (isset($tplObject[$key])) {
         return $tplObject[$key];
     }

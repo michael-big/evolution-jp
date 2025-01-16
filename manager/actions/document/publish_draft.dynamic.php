@@ -9,10 +9,10 @@ if (!evo()->hasPermission('save_document')) {
     alert()->dumpError();
 }
 
-if (isset($_POST['id']) && preg_match('@^[1-9][0-9]*$@', $_POST['id'])) {
-    $docid = $_POST['id'];
-} elseif (isset($_GET['id']) && preg_match('@^[1-9][0-9]*$@', $_GET['id'])) {
-    $docid = $_GET['id'];
+if (preg_match('@^[1-9][0-9]*$@', postv('id'))) {
+    $docid = postv('id');
+} elseif (preg_match('@^[1-9][0-9]*$@', getv('id'))) {
+    $docid = getv('id');
 } else {
     alert()->setError(2);
     alert()->dumpError();

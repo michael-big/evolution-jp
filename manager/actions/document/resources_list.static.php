@@ -19,7 +19,7 @@ evo()->loadExtension('DocAPI');
 evo()->updatePublishStatus();
 
 if (!$id) {
-    $current = array();
+    $current = [];
 } else {
     $current = db()->getRow(
         db()->select('*', '[+prefix+]site_content', "id='" . $id . "'")
@@ -36,12 +36,12 @@ if (!isset($current['id'])) {
     $current['id'] = 0;
 }
 
-$docgrp = $_SESSION['mgrDocgroups'] ? implode(',', $_SESSION['mgrDocgroups']) : '';
+$docgrp = sessionv('mgrDocgroups') ? implode(',', sessionv('mgrDocgroups')) : '';
 $in_docgrp = !empty($docgrp) ? " OR dg.document_group IN (" . $docgrp . ")" : '';
 
-$where = array();
+$where = [];
 $where[] = "sc.parent='" . $id . "'";
-if ($_SESSION['mgrRole'] != 1 && !evo()->config['tree_show_protected']) {
+if (!manager()->isAdmin() && !evo()->config['tree_show_protected']) {
     $where[] = sprintf("AND (sc.privatemgr=0 %s)", $in_docgrp);
 }
 $rs = db()->select(
@@ -55,15 +55,15 @@ if (!$numRecords) {
     $children_output = "<p>" . $_lang['resources_in_container_no'] . "</p>";
 } else {
     $children_output = '';
-    $f = array();
+    $f = [];
     $f[] = 'DISTINCT sc.*';
-    if ($_SESSION['mgrRole'] != 1) {
+    if (!manager()->isAdmin()) {
         $f['has_access'] = sprintf('MAX(IF(sc.privatemgr=0 %s, 1, 0))', $in_docgrp);
     }
     $f[] = 'rev.status';
-    $where = array();
+    $where = [];
     $where[] = "sc.parent='" . $id . "'";
-    if ($_SESSION['mgrRole'] != 1 && !evo()->config('tree_show_protected')) {
+    if (!manager()->isAdmin() && !evo()->config('tree_show_protected')) {
         $where[] = sprintf("AND (sc.privatemgr=0 %s)", $in_docgrp);
     }
     $where[] = 'GROUP BY sc.id,rev.status';
@@ -89,19 +89,19 @@ if (!$numRecords) {
             evo()->config('number_of_results')
         )
     );
-    $docs = array();
+    $docs = [];
     while ($row = db()->getRow($rs)) {
         $docs[$row['id']] = $row;
     }
 
-    $rows = array();
+    $rows = [];
     $tpl = '<div class="title">[+icon+][+statusIcon+]</div><a href="[+link+]">[+title+][+description+]</a>';
     foreach ($docs as $docid => $doc) {
         if (!manager()->isContainAllowed($docid)) {
             continue;
         }
 
-        if ($_SESSION['mgrRole'] == 1) {
+        if (manager()->isAdmin()) {
             $doc['has_access'] = 1;
         }
         $doc = hsc($doc);
@@ -112,7 +112,7 @@ if (!$numRecords) {
         $doc['title'] = getTitle($doc);
         $doc['description'] = getDescription($doc);
 
-        $col = array();
+        $col = [];
         $col['checkbox'] = sprintf('<input type="checkbox" name="batch[]" value="%s" />', $docid);
         $col['docid'] = $docid;
         $col['title'] = parseText($tpl, $doc);
@@ -159,7 +159,7 @@ echo get_jscript($id, $cm);
 
 ?>
     <script type="text/javascript" src="media/script/tablesort.js"></script>
-    <h1><?php echo $_lang['view_child_resources_in_container'] ?></h1>
+    <h1><?= $_lang['view_child_resources_in_container'] ?></h1>
 
     <div id="actions">
         <ul class="actionButtons">
@@ -195,21 +195,21 @@ echo get_jscript($id, $cm);
             <?php if (hasPermission('new_document')) { ?>
                 <ul class="actionButtons">
                     <li class="mutate">
-                        <a href="index.php?a=4&amp;pid=<?php echo $id ?>">
+                        <a href="index.php?a=4&amp;pid=<?= $id ?>">
                             <img
-                                src="<?php echo $_style["icons_new_document"]; ?>"
+                                src="<?= $_style["icons_new_document"] ?>"
                                 align="absmiddle"
                             />
-                            <?php echo $_lang['create_resource_here'] ?>
+                            <?= $_lang['create_resource_here'] ?>
                         </a>
                     </li>
                     <li class="mutate">
-                        <a href="index.php?a=72&amp;pid=<?php echo $id ?>">
+                        <a href="index.php?a=72&amp;pid=<?= $id ?>">
                             <img
-                                src="<?php echo $_style["icons_new_weblink"]; ?>"
+                                src="<?= $_style["icons_new_weblink"] ?>"
                                 align="absmiddle"
                             />
-                            <?php echo $_lang['create_weblink_here'] ?>
+                            <?= $_lang['create_weblink_here'] ?>
                         </a>
                     </li>
                 </ul>
@@ -292,7 +292,7 @@ function getDescription($doc)
 
 function _getClasses($doc)
 {
-    $classes = array();
+    $classes = [];
     $classes[] = 'withmenu';
     if ($doc['deleted'] === '1') {
         $classes[] = 'deletedNode';
@@ -333,7 +333,7 @@ function getEditedon($editedon)
 
 function getStatusIcon($status)
 {
-    global $modx, $_style;
+    global $_style;
 
     if (!evo()->config['enable_draft']) {
         return '';

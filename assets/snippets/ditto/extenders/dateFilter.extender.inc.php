@@ -102,18 +102,18 @@ if (!isset($dateFilterDefault)) $dateFilterDefault = 0;
 	0
 */
 if ($source === 'get') {
-    if (!empty($_GET[$dittoID . 'year']) && $_GET[$dittoID . 'year'] != 'false') {
-        $year = (int)$_GET[$dittoID . 'year'];
+    if (!empty(getv($dittoID . 'year')) && getv($dittoID . 'year') != 'false') {
+        $year = (int)getv($dittoID . 'year');
     } else {
         $year = 0;
     }
-    if (!empty($_GET[$dittoID . 'month']) && $_GET[$dittoID . 'month'] != 'false') {
-        $month = (int)$_GET[$dittoID . 'month'];
+    if (!empty(getv($dittoID . 'month')) && getv($dittoID . 'month') != 'false') {
+        $month = (int)getv($dittoID . 'month');
     } else {
         $month = 0;
     }
-    if (!empty($_GET[$dittoID . 'day']) && $_GET[$dittoID . 'day'] != 'false') {
-        $day = (int)$_GET[$dittoID . 'day'];
+    if (!empty(getv($dittoID . 'day')) && getv($dittoID . 'day') != 'false') {
+        $day = (int)getv($dittoID . 'day');
     } else {
         $day = 0;
     }
@@ -158,8 +158,8 @@ if ($source === 'get') {
         [NULL]
     */
 } else {
-    if (!empty($_REQUEST[$dittoID . $source])) {
-        $date = getdate(strtotime($_REQUEST[$dittoID . $source]));
+    if (anyv($dittoID . $source)) {
+        $date = getdate(strtotime(anyv($dittoID . $source)));
         $year = $date['year'];
         $month = $date['mon'];
         $day = $date['mday'];
@@ -209,7 +209,7 @@ if ($year) {
     */
 }
 if ($month && $year) {
-    $month_text = strftime('%B', mktime(10, 10, 10, $month, 10, $year));
+    $month_text = evo()->mb_strftime('%B', mktime(10, 10, 10, $month, 10, $year));
     $modx->setPlaceholder($dittoID . 'month', $month_text);
     /*
         Placeholder: month

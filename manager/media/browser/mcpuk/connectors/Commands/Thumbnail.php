@@ -26,7 +26,8 @@ if (!defined('MODX_BASE_PATH') || strpos(str_replace('\\', '/', __FILE__), MODX_
 }
 include_once(MODX_BASE_PATH . 'manager/media/browser/mcpuk/connectors/Commands/helpers/iconlookup.php');
 
-class Thumbnail
+require_once 'Base.php';
+class Thumbnail extends Base
 {
     public $fckphp_config;
     public $type;
@@ -65,9 +66,9 @@ class Thumbnail
             if ($this->isImage($mime, $ext)) {
                 if (!is_dir($thumbdir)) {
                     $rs = mkdir($thumbdir, $folder_permissions, true);
-                }
-                if ($rs) {
-                    chmod($thumbdir, $folder_permissions);
+                    if ($rs) {
+                        chmod($thumbdir, $folder_permissions);
+                    }
                 }
                 //Try and find a thumbnail, else try to generate one
                 //    else send generic picture icon.

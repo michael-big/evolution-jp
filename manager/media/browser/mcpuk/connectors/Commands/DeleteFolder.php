@@ -18,7 +18,8 @@
  * Grant French (grant@mcpuk.net)
  */
 
-class DeleteFolder
+require_once 'Base.php';
+class DeleteFolder extends Base
 {
     public $fckphp_config;
     public $type;
@@ -33,7 +34,7 @@ class DeleteFolder
         $this->raw_cwd = $cwd;
         $this->actual_cwd = str_replace("//", "/", ($this->fckphp_config['UserFilesPath'] . "/$type/" . $this->raw_cwd));
         $this->real_cwd = str_replace("//", "/", ($this->fckphp_config['basedir'] . "/" . $this->actual_cwd));
-        $this->foldername = str_replace(array("..", "/"), "", $_GET['FolderName']);
+        $this->foldername = str_replace(array("..", "/"), "", getv('FolderName'));
     }
 
     function run()
@@ -45,9 +46,9 @@ class DeleteFolder
         header("content-type: text/xml");
         echo "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n";
         ?>
-        <Connector command="DeleteFolder" resourceType="<?php echo $this->type; ?>">
-            <CurrentFolder path="<?php echo $this->raw_cwd; ?>" url="<?php echo $this->actual_cwd; ?>"/>
-            <Error number="<?php echo "" . $err_no; ?>"/>
+        <Connector command="DeleteFolder" resourceType="<?= $this->type ?>">
+            <CurrentFolder path="<?= $this->raw_cwd ?>" url="<?= $this->actual_cwd ?>"/>
+            <Error number="<?= "" . $err_no ?>"/>
         </Connector>
         <?php
     }

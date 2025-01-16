@@ -18,7 +18,8 @@
  * Grant French (grant@mcpuk.net)
  */
 
-class GetUploadProgress
+require_once 'Base.php';
+class GetUploadProgress extends Base
 {
     public $fckphp_config;
     public $type;
@@ -33,8 +34,8 @@ class GetUploadProgress
         $this->raw_cwd = $cwd;
         $this->actual_cwd = str_replace("//", "/", ($fckphp_config['UserFilesPath'] . "/$type/" . $this->raw_cwd));
         $this->real_cwd = str_replace("//", "/", ($this->fckphp_config['basedir'] . "/" . $this->actual_cwd));
-        $this->uploadID = $_GET['uploadID'];
-        $this->refreshURL = $_GET['refreshURL'];
+        $this->uploadID = getv('uploadID');
+        $this->refreshURL = getv('refreshURL');
 
     }
 
@@ -52,8 +53,8 @@ class GetUploadProgress
                 header("content-type: text/xml"); //Nick Crossland (ncrossland)
                 echo "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n";
                 ?>
-                <Connector command="GetUploadProgress" resourceType="<?php echo $this->type; ?>">
-                    <CurrentFolder path="<?php echo $this->raw_cwd; ?>" url="<?php echo $this->actual_cwd; ?>"/>
+                <Connector command="GetUploadProgress" resourceType="<?= $this->type ?>">
+                    <CurrentFolder path="<?= $this->raw_cwd ?>" url="<?= $this->actual_cwd ?>"/>
                     <Progress max="2" value="1"/>
                     <RefreshURL url=""/>
                 </Connector>
@@ -81,10 +82,10 @@ class GetUploadProgress
         header("content-type: text/xml");
         echo "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n";
         ?>
-        <Connector command="GetUploadProgress" resourceType="<?php echo $this->type; ?>">
-            <CurrentFolder path="<?php echo $this->raw_cwd; ?>" url="<?php echo $this->actual_cwd; ?>"/>
-            <Progress max="<?php echo $totalBytes; ?>" value="<?php echo $readBytes; ?>"/>
-            <RefreshURL url="<?php echo htmlentities($refreshURL, ENT_QUOTES, 'UTF-8'); ?>"/>
+        <Connector command="GetUploadProgress" resourceType="<?= $this->type ?>">
+            <CurrentFolder path="<?= $this->raw_cwd ?>" url="<?= $this->actual_cwd ?>"/>
+            <Progress max="<?= $totalBytes ?>" value="<?= $readBytes ?>"/>
+            <RefreshURL url="<?= htmlentities($refreshURL, ENT_QUOTES, 'UTF-8') ?>"/>
         </Connector>
         <?php
         xml_parser_free($parser);

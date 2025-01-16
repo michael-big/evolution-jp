@@ -9,7 +9,7 @@ if (!evo()->hasPermission('delete_document')) {
 }
 
 // check the document doesn't have any children
-$id = intval($_GET['id']);
+$id = intval(getv('id'));
 
 // check permissions on the document
 if ($id == $modx->config['site_start']) {
@@ -32,7 +32,7 @@ if (isset($warning)) {
     $modx->webAlertAndQuit($warning, 'javascript:history.back();');
 }
 
-$children = array();
+$children = [];
 getChildren($id);
 
 // invoke OnBeforeDocFormDelete event
@@ -44,7 +44,7 @@ if ($params['enableProcess'] == false) {
     $modx->webAlertAndQuit("The deletion process was interrupted by plugin.");
 }
 
-$field = array();
+$field = [];
 $field['deleted'] = '1';
 $field['deletedby'] = evo()->getLoginUserID();
 $field['deletedon'] = time();
@@ -64,13 +64,13 @@ if (!$rs) {
 
 // invoke OnDocFormDelete event
 $params['id'] = $id;
-$params['children'] = $children; //array()
+$params['children'] = $children; //[]
 evo()->invokeEvent("OnDocFormDelete", $params);
 
 // empty cache
 $modx->clearCache();
 $pid = db()->getValue(db()->select('parent', '[+prefix+]site_content', "id='{$id}'"));
-$page = (isset($_GET['page'])) ? "&page={$_GET['page']}" : '';
+$page = getv('page') ? "&page=" . getv('page') : '';
 if ($pid !== '0') {
     $url = "index.php?r=1&a=120&id={$pid}";
 } else {

@@ -6,7 +6,7 @@
 define('MODX_API_MODE', true);
 define('IN_MANAGER_MODE', 'true');
 $self = 'assets/modules/docmanager/tv.ajax.php';
-$base_path = str_replace(array('\\', $self), array('/', ''), __FILE__);
+$base_path = str_replace(['\\', $self], ['/', ''], __FILE__);
 include_once($base_path . 'manager/includes/document.parser.class.inc.php');
 $modx = new DocumentParser;
 include_once($base_path . "assets/modules/docmanager/classes/docmanager.class.php");
@@ -18,17 +18,14 @@ $dm->getTheme();
 
 $output = '';
 
-if (!isset($_POST['tplID']) || !is_numeric($_POST['tplID'])) {
+if (!is_numeric(postv('tplID'))) {
     return;
 }
 
-$tplID = $_POST['tplID'];
+$tplID = postv('tplID');
 $rs = db()->select(
     '*',
-    array(
-        "[+prefix+]site_tmplvars tv ",
-        "LEFT JOIN [+prefix+]site_tmplvar_templates tvtpl ON tv.id = tvtpl.tmplvarid"
-    ),
+    ["[+prefix+]site_tmplvars tv", "LEFT JOIN [+prefix+]site_tmplvar_templates tvtpl ON tv.id = tvtpl.tmplvarid"],
     "tvtpl.templateid ='" . $tplID . "'"
 );
 $total = db()->count($rs);
@@ -191,7 +188,7 @@ function renderFormElement($field_type, $field_id, $default_text, $field_element
             $field_html .= "</select>";
             break;
         case 'url': // handles url input fields
-            $urls = array('' => '--', 'http://' => 'http://', 'https://' => 'https://', 'ftp://' => 'ftp://', 'mailto:' => 'mailto:');
+            $urls = ['' => '--', 'http://' => 'http://', 'https://' => 'https://', 'ftp://' => 'ftp://', 'mailto:' => 'mailto:'];
             $field_html = sprintf(
                 '<table border="0" cellspacing="0" cellpadding="0"><tr><td><select id="tv%s_prefix" name="tv%s_prefix" onchange="documentDirty=true;">',
                 $field_id,
@@ -248,7 +245,7 @@ function renderFormElement($field_type, $field_id, $default_text, $field_element
         case 'image':    // handles image fields using htmlarea image manager
             global $ResourceManagerLoaded;
             global $content, $use_editor, $which_editor;
-            if (!$ResourceManagerLoaded && !(($content['richtext'] == 1 || $_GET['a'] == 4) && $use_editor == 1 && $which_editor == 3)) {
+            if (!$ResourceManagerLoaded && !(($content['richtext'] == 1 || getv('a') == 4) && $use_editor == 1 && $which_editor == 3)) {
                 $field_html .= "
 				<script type=\"text/javascript\">
 						var lastImageCtrl;
@@ -307,7 +304,7 @@ function renderFormElement($field_type, $field_id, $default_text, $field_element
             /* Modified by Timon for use with resource browser */
             global $ResourceManagerLoaded;
             global $content, $use_editor, $which_editor;
-            if (!$ResourceManagerLoaded && !(($content['richtext'] == 1 || $_GET['a'] == 4) && $use_editor == 1 && $which_editor == 3)) {
+            if (!$ResourceManagerLoaded && !(($content['richtext'] == 1 || getv('a') == 4) && $use_editor == 1 && $which_editor == 3)) {
                 /* I didn't understand the meaning of the condition above, so I left it untouched ;-) */
                 $field_html .= "
 				<script type=\"text/javascript\">
@@ -389,7 +386,7 @@ function ParseIntputOptions($v)
         return explode('||', $v);
     }
 
-    $a = array();
+    $a = [];
     while ($cols = db()->getRow($v, 'num')) {
         $a[] = $cols;
     }

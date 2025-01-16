@@ -46,14 +46,14 @@ function selected($cond)
 function getUser($userid)
 {
     $field = 'mu.*, ua.*';
-    $from = array(
+    $from = [
         '[+prefix+]manager_users mu',
         'LEFT JOIN [+prefix+]user_attributes ua ON ua.internalKey=mu.id'
-    );
+    ];
     $rs = db()->select(
-        $field
-        , $from
-        , sprintf("mu.id='%s'", db()->escape($userid))
+        $field,
+        $from,
+        sprintf("mu.id='%s'", db()->escape($userid))
     );
 
     if (!db()->count($rs)) {
@@ -97,9 +97,9 @@ function hasUserPermission($action)
 function activeUserCheck($userid)
 {
     $rs = db()->select(
-        'internalKey, username'
-        , '[+prefix+]active_users'
-        , sprintf("action='12' AND id='%s'", $userid)
+        'internalKey, username',
+        '[+prefix+]active_users',
+        sprintf("action='12' AND id='%s'", $userid)
     );
     if (db()->count($rs) > 1) {
         while ($lock = db()->getRow($rs)) {
@@ -115,16 +115,20 @@ function activeUserCheck($userid)
 
 function blockedmode($user)
 {
-    if ($user['blocked'] == 1) {
+    if (!$user) {
+        return '0';
+    }
+
+    if ($user['blocked']??null == 1) {
         return '1';
     }
-    if ($user['blockeduntil'] && $user['blockeduntil'] > time()) {
+    if ($user['blockeduntil']??null && $user['blockeduntil'] > time()) {
         return '1';
     }
-    if ($user['blockedafter'] && $user['blockedafter'] < time()) {
+    if ($user['blockedafter']??null && $user['blockedafter'] < time()) {
         return '1';
     }
-    if (3 < $user['failedlogins']) {
+    if (isset($user['failedlogins']) && 3 < $user['failedlogins']) {
         return '1';
     }
     return '0';
@@ -132,30 +136,30 @@ function blockedmode($user)
 
 function saveOptions()
 {
-    $option = array();
+    $option = [];
     $option[] = html_tag(
-        'option'
-        , array(
+        'option',
+        [
             'value' => 'next',
             'selected' => evo()->input_any('save_action') == 'next' ? null : ''
-        )
-        , lang('stay_new')
+        ],
+        lang('stay_new')
     );
     $option[] = html_tag(
-        'option'
-        , array(
+        'option',
+        [
             'value' => 'stay',
             'selected' => evo()->input_any('save_action') == 'stay' ? null : ''
-        )
-        , lang('stay')
+        ],
+        lang('stay')
     );
     $option[] = html_tag(
-        'option'
-        , array(
+        'option',
+        [
             'value' => 'close',
             'selected' => evo()->input_any('save_action', 'close') == 'close' ? null : ''
-        )
-        , lang('close')
+        ],
+        lang('close')
     );
     return $option;
 }
@@ -166,36 +170,36 @@ function aButtonSave()
         return '';
     }
     return html_tag(
-        'li'
-        , array(
+        'li',
+        [
             'id' => 'Button1',
             'class' => 'mutate'
-        )
-        , html_tag(
-            'a'
-            , array(
+        ],
+        html_tag(
+            'a',
+            [
                 'href' => '#',
                 'onclick' => 'documentDirty=false; document.userform.save.click();'
+            ],
+            html_tag(
+                'img',
+                ['src' => style('icons_save')]
             )
-            , html_tag(
-                'img'
-                , array('src' => style('icons_save'))
+                . lang('update')
+        )
+            . html_tag(
+                'span',
+                ['class' => 'and'],
+                ' + '
             )
-            . lang('update')
-        )
-        . html_tag(
-            'span'
-            , array('class' => 'and')
-            , ' + '
-        )
-        . html_tag(
-            'select'
-            , array(
-                'id' => 'stay',
-                'name' => 'save_action'
+            . html_tag(
+                'select',
+                [
+                    'id' => 'stay',
+                    'name' => 'save_action'
+                ],
+                implode("\n", saveOptions())
             )
-            , implode("\n", saveOptions())
-        )
     );
 }
 
@@ -206,21 +210,21 @@ function aButtonDelete($userid)
     }
 
     return manager()->ab(
-        array(
+        [
             'onclick' => 'deleteuser();',
             'icon' => style('icons_delete_document'),
             'label' => lang('delete')
-        )
+        ]
     );
 }
 
 function aButtonCancel()
 {
     return manager()->ab(
-        array(
+        [
             'onclick' => "document.location.href='index.php?a=75';",
             'icon' => style('icons_cancel'),
             'label' => lang('cancel')
-        )
+        ]
     );
 }

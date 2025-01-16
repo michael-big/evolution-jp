@@ -5,7 +5,12 @@ if (!isset($modx) || !evo()->isLoggedin()) {
 
 unset($_SESSION['itemname']); // clear this, because it's only set for logging purposes
 
-if (evo()->hasPermission('settings') && (!isset($settings_version) || $settings_version != $modx_version)) {
+$settings_version = db()->getValue(
+    'setting_value',
+    evo()->getFullTableName('system_settings'),
+    'setting_name="settings_version"'
+);
+if (evo()->hasPermission('settings') && $settings_version != $modx_version) {
     // seems to be a new install - send the user to the configuration page
     echo '<script>document.location.href="index.php?a=17";</script>';
     exit;
@@ -38,16 +43,19 @@ $modx->setPlaceholder('info', $_lang['info']);
 
 // setup message info
 if (evo()->hasPermission('messages')) {
-    $messages = $modx->manager->getMessageCount();
+    $messages = manager()->getMessageCount();
     $_SESSION['nrtotalmessages'] = $messages['total'];
     $_SESSION['nrnewmessages'] = $messages['new'];
 
     $msg = '<a href="index.php?a=10"><img src="' . $_style['icons_mail_large'] . '" /></a>
-    <span style="color:#909090;font-size:15px;font-weight:bold">&nbsp;' . $_lang["inbox"] . ($_SESSION['nrnewmessages'] > 0 ? " (<span style='color:red'>" . $_SESSION['nrnewmessages'] . '</span>)' : '') . '</span><br />';
-    if ($_SESSION['nrnewmessages'] > 0) {
+    <span style="color:#909090;font-size:15px;font-weight:bold">&nbsp;' . $_lang["inbox"] . (sessionv('nrnewmessages') > 0 ? " (<span style='color:red'>" . sessionv('nrnewmessages') . '</span>)' : '') . '</span><br />';
+    if (sessionv('nrnewmessages') > 0) {
         $msg .= '<span class="comment">'
-            . sprintf($_lang["welcome_messages"], $_SESSION['nrtotalmessages'],
-                "<span style='color:red;'>" . $_SESSION['nrnewmessages'] . "</span>") . '</span>';
+            . sprintf(
+                $_lang["welcome_messages"],
+                sessionv('nrtotalmessages'),
+                "<span style='color:red;'>" . sessionv('nrnewmessages') . "</span>"
+            ) . '</span>';
         $mail_icon = $_style['icons_mail_new_large'];
     } else {
         $msg .= '<span class="comment">' . $_lang["messages_no_messages"] . '</span>';
@@ -67,8 +75,12 @@ if (evo()->hasPermission('new_document') || evo()->hasPermission('save_document'
     $modx->setPlaceholder('NewDocIcon', $src);
 }
 if (evo()->hasPermission('view_document')) {
-    $src = get_icon($_lang['view_child_resources_in_container'], 120, $_style['icons_resources_large'],
-        $_lang['view_child_resources_in_container']);
+    $src = get_icon(
+        $_lang['view_child_resources_in_container'],
+        120,
+        $_style['icons_resources_large'],
+        $_lang['view_child_resources_in_container']
+    );
     $modx->setPlaceholder('iconResources', $src);
 }
 if (evo()->hasPermission('edit_user')) {
@@ -147,10 +159,10 @@ if (evo()->hasPermission('settings')) {
 }
 
 // setup modules
-$modulemenu = array();
+$modulemenu = [];
 if (evo()->hasPermission('exec_module')) {
     // Each module
-    if ($_SESSION['mgrRole'] != 1) {
+    if (!manager()->isAdmin()) {
         // Display only those modules the user can execute
         $tbl_site_modules = evo()->getFullTableName('site_modules');
         $tbl_site_module_access = evo()->getFullTableName('site_module_access');
@@ -180,13 +192,18 @@ if (0 < count($modulemenu)) {
 $modx->setPlaceholder('Modules', $modules);
 
 // do some config checks
-if (($modx->config['warning_visibility'] == 0 && $_SESSION['mgrRole'] == 1)
-    || ($modx->config['warning_visibility'] == 2 && evo()->hasPermission('save_role') == 1)
-    || $modx->config['warning_visibility'] == 1) {
+if (config('warning_visibility' == 0 && manager()->isAdmin())
+    || (config('warning_visibility') == 2 && evo()->hasPermission('save_role') == 1)
+    || config('warning_visibility') == 1
+) {
     include_once(MODX_CORE_PATH . 'config_check.inc.php');
+    $configCheck = new ConfigCheck($_lang);
+    $configCheck->run();
+    $config_check_results = $configCheck->getWarnings();
+
     $modx->setPlaceholder('settings_config', $_lang['warning']);
     $modx->setPlaceholder('configcheck_title', $_lang['configcheck_title']);
-    if ($config_check_results != $_lang['configcheck_ok']) {
+    if ($config_check_results) {
         $modx->setPlaceholder('config_check_results', $config_check_results);
         $modx->setPlaceholder('config_display', 'block');
     } else {
@@ -199,7 +216,7 @@ if (($modx->config['warning_visibility'] == 0 && $_SESSION['mgrRole'] == 1)
 // load template file
 global $tpl;
 // invoke event OnManagerWelcomePrerender
-$modx->event->vars = array();
+$modx->event->vars = [];
 $modx->event->vars['tpl'] = &$tpl;
 $evtOut = evo()->invokeEvent('OnManagerWelcomePrerender');
 if (is_array($evtOut)) {
@@ -216,7 +233,7 @@ if (is_array($evtOut)) {
 
 // invoke event OnManagerWelcomeRender
 $evtOut = evo()->invokeEvent('OnManagerWelcomeRender');
-$modx->event->vars = array();
+$modx->event->vars = [];
 if (is_array($evtOut)) {
     $output = implode('', $evtOut);
     $modx->setPlaceholder('OnManagerWelcomeRender', $output);
@@ -239,7 +256,8 @@ function get_icon($title, $action, $icon_path, $alt = '')
     return '<span class="wm_button" style="border:0">' . $icon . '</span>';
 }
 
-function welcomeTpl($tpl) {
+function welcomeTpl($tpl)
+{
     if (!empty($tpl)) {
         return $tpl;
     }
@@ -258,7 +276,7 @@ function welcomeTpl($tpl) {
     $target = evo()->config('manager_welcome_tpl');
     if (strpos($target, '@') === 0) {
         $result = evo()->atBind($target);
-        if($result) {
+        if ($result) {
             return $result;
         }
     }

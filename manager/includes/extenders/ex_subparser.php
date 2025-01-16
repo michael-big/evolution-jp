@@ -214,7 +214,7 @@ class SubParser
 
         if (!is_array($params) && preg_match('@^[1-9][0-9]*$@', $params)) {
             $docid = $params;
-            if ($modx->config['cache_type'] === '2') {
+            if ($modx->config['cache_type'] == 2) {
                 $url = $modx->config['base_url'] . $modx->makeUrl($docid, '', '', 'root_rel');
                 $filename = hash('crc32b', $url);
             } else {
@@ -240,8 +240,8 @@ class SubParser
             $params['target'] = 'pagecache,sitecache';
         }
 
-        $showReport = ($params['showReport']) ? $params['showReport'] : false;
-        $target = ($params['target']) ? $params['target'] : 'pagecache,sitecache';
+        $showReport = !empty($params['showReport']) ? $params['showReport'] : false;
+        $target = !empty($params['target']) ? $params['target'] : 'pagecache,sitecache';
 
         include_once MODX_CORE_PATH . 'cache_sync.class.php';
         $sync = new synccache();
@@ -367,11 +367,8 @@ class SubParser
         $str .= sprintf('<td>%s</td>', hsc(urldecode(evo()->server('REQUEST_URI'))));
         $str .= '</tr>';
 
-        if (isset($_GET['a'])) {
-            $action = $_GET['a'];
-        } elseif (isset($_POST['a'])) {
-            $action = $_POST['a'];
-        }
+        $action = getv('a', postv('a'));
+
         if (isset($action) && $action) {
             include_once(MODX_CORE_PATH . 'actionlist.inc.php');
             global $action_list;
@@ -389,7 +386,7 @@ class SubParser
             );
         }
 
-        if (preg_match('@^[0-9]+@', $modx->documentIdentifier)) {
+        if (!is_null($modx->documentIdentifier) && preg_match('@^[0-9]+@', $modx->documentIdentifier)) {
             $resource = $modx->getDocumentObject('id', $modx->documentIdentifier);
             $str .= $modx->parseText(
                 $tpl,
@@ -512,7 +509,9 @@ class SubParser
 
         // Set 500 response header
         if (2 < $error_level && $modx->event->name !== 'OnWebPageComplete') {
-            header('HTTP/1.1 500 Internal Server Error');
+            if (!headers_sent()) {
+                header('HTTP/1.1 500 Internal Server Error');
+            }
         }
 
         // Display error
@@ -1321,8 +1320,8 @@ class SubParser
         $field_type,
         $field_id,
         $default_text = '',
-        $field_elements,
-        $field_value,
+        $field_elements = '',
+        $field_value = '',
         $field_style = '',
         $row = []
     )
@@ -1896,7 +1895,7 @@ class SubParser
             'user.username, user.password, attrib.*',
             [
                 '[+prefix+]manager_users user',
-                'INNER JOIN [+prefix+]user_attributes attrib ON ua.internalKey=user.id'
+                'INNER JOIN [+prefix+]user_attributes attrib ON attrib.internalKey=user.id'
             ],
             sprintf("user.id='%s'", db()->escape($uid))
         );

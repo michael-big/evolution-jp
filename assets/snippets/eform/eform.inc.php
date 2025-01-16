@@ -128,7 +128,7 @@ function eForm($modx, $params)
     global $debugText;
     global $formats, $fields, $efPostBack, $_dfnMaxlength;
 
-    $fields = array(); //reset fields array - needed in case of multiple forms
+    $fields = []; //reset fields array - needed in case of multiple forms
 
 // define some variables used as array index
     $_dfnMaxlength = 6;
@@ -192,7 +192,7 @@ function eForm($modx, $params)
         ), $tpl);
     }
 
-    $validFormId = (isset($_POST['formid']) && $formid == $_POST['formid']) ? 1 : 0;
+    $validFormId = $formid == postv('formid') ? 1 : 0;
 
     # check if postback mode
     $efPostBack = ($validFormId && $_POST && (strpos($_SERVER["HTTP_REFERER"], $modx->config["site_url"]) !== FALSE)) ? true : false; //retain old variable?
@@ -259,7 +259,7 @@ function eForm($modx, $params)
         $disclaimer = (($tmp = efLoadTemplate($disclaimer)) !== false) ? $tmp : '';
 
         //error message containers
-        $vMsg = $rMsg = $rClass = array();
+        $vMsg = $rMsg = $rClass = [];
 
         # get user post back data
         foreach ($_POST as $name => $value) {
@@ -290,7 +290,7 @@ function eForm($modx, $params)
         if ($vericode) {
             //add support for captcha code - thanks to Djamoer
             $code = $_SESSION['veriword'] ? $_SESSION['veriword'] : $_SESSION['eForm.VeriCode'];
-            if ($fields['vericode'] != $code) {
+            if (postv('vericode') != $code) {
                 $vMsg[count($vMsg)] = $_lang['ef_failed_vericode'];
                 $rClass['vericode'] = $invalidClass; //added in 1.4.4
             }
@@ -438,7 +438,7 @@ function eForm($modx, $params)
                             break;
                         case "date":
                             $format_string = isset($_lang['ef_date_format']) ? $_lang['ef_date_format'] : '%d-%b-%Y %H:%M:%S';
-                            $value = ($value) ? strftime($format_string, strtotime($value)) : "";
+                            $value = ($value) ? evo()->mb_strftime($format_string, strtotime($value)) : "";
                             $value = str_replace("00:00:00", "", $value);// remove trailing zero time values
                             break;
                         case "html":
@@ -465,7 +465,7 @@ function eForm($modx, $params)
                 }
             }
             # set postdate
-            $fields['postdate'] = strftime($modx->toDateFormat(null, 'formatOnly') . " %H:%M:%S", time());
+            $fields['postdate'] = evo()->mb_strftime($modx->toDateFormat(null, 'formatOnly') . " %H:%M:%S", time());
 
             //check against email injection and replace suspect content
             if (hasMailHeaders($fields)) {
@@ -793,7 +793,7 @@ function eForm($modx, $params)
 function formMerge($docText, $docFields, $vClasses = '')
 {
     global $formats;
-    static $lastitems = array();
+    static $lastitems = [];
 
     if (!$docText) {
         return '';
@@ -934,8 +934,8 @@ function eFormParseTemplate($tpl, $isDebug = false)
     global $formats, $optionsName, $_lang, $debugText, $fields, $validFormId;
     global $efPostBack, $_dfnMaxlength;
 
-    $formats = array();  //clear formats so values don't persist through multiple snippet calls
-    $labels = array();
+    $formats = [];  //clear formats so values don't persist through multiple snippet calls
+    $labels = [];
 
     $regExpr = "#(<label[^>]*?>)(.*?)</label>#si";
     preg_match_all($regExpr, $tpl, $matches);
@@ -1025,7 +1025,7 @@ function eFormParseTemplate($tpl, $isDebug = false)
                 $select = $newSelect = $matches[0];
                 //get separate option tags and split them up
                 preg_match_all("#(<option [^>]*?>)#si", $matches[1], $matches);
-                $validValues = array();
+                $validValues = [];
                 foreach ($matches[1] as $option) {
                     $attr = attr2array($option);
 //* debug */ print __LINE__.': <pre>'.print_r($attr,true) .'</pre><br />';
@@ -1229,7 +1229,7 @@ function validateField($value, $fld, &$vMsg, $isDebug = false)
             case "#SELECT":    //validates against a list of values from the cms database
                 #cache all this
                 if (!isset($vlist)) {
-                    $rt = array();
+                    $rt = [];
                     $param = str_replace('{DBASE}', db()->get('dbase'), $param);
                     $param = str_replace('{PREFIX}', db()->get('table_prefix'), $param);
                     //added in 1.4

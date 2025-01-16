@@ -33,12 +33,12 @@ if (request_intvar('id')) {
 evo()->loadExtension('REVISION');
 if (request_intvar('id') && config('enable_draft')) {
     $modx->revisionObject = evo()->revision->getRevisionObject(
-        request_intvar('id')
-        , 'resource'
-        , 'template'
+        request_intvar('id'),
+        'resource',
+        'template'
     );
 } else {
-    $modx->revisionObject = array();
+    $modx->revisionObject = [];
 }
 
 if (preg_match('/[1-9][0-9]*/', request_intvar('newtemplate'))) {
@@ -60,7 +60,7 @@ $modx->event->vars['documentObject'] = &$docObject;
 // invoke OnDocFormPrerender event
 $tmp = array('id' => request_intvar('id'));
 $OnDocFormPrerender = evo()->invokeEvent('OnDocFormPrerender', $tmp);
-$modx->event->vars = array();
+$modx->event->vars = [];
 
 global $template; // For plugins (ManagerManager etc...)
 $template = doc('template');
@@ -69,22 +69,22 @@ checkViewUnpubDocPerm(doc('published'), doc('editedby'));// Only a=27
 
 $_SESSION['itemname'] = evo()->hsc(doc('pagetitle'));
 
-$body = array();
+$body = [];
 $body[] = parseText(
-    file_get_tpl('tab_general.tpl')
-    , collect_tab_general_ph(request_intvar('id'))
+    file_get_tpl('tab_general.tpl'),
+    collect_tab_general_ph(request_intvar('id'))
 );
 
 if (!config('tvs_below_content', 1) && $tmplVars) {
     $body[] = parseText(
-        file_get_tpl('tab_tv.tpl')
-        , collect_tab_tv_ph()
+        file_get_tpl('tab_tv.tpl'),
+        collect_tab_tv_ph()
     );
 }
 
 $body[] = parseText(
-    file_get_tpl('tab_settings.tpl')
-    , collect_tab_settings_ph(request_intvar('id'))
+    file_get_tpl('tab_settings.tpl'),
+    collect_tab_settings_ph(request_intvar('id'))
 );
 
 if (config('use_udperms') == 1) {
@@ -93,12 +93,12 @@ if (config('use_udperms') == 1) {
 
     // See if the Access Permissions section is worth displaying...
     if ($permissions) {
-        $ph = array();
+        $ph = [];
         $ph['_lang_access_permissions'] = lang('access_permissions');
         $ph['_lang_access_permissions_docs_message'] = lang('access_permissions_docs_message');
         $ph['UDGroups'] = implode("\n", $permissions);
         $body[] = parseText(file_get_tpl('tab_access.tpl'), $ph);
-    } elseif (sessionv('mgrRole') != 1 && $permissions_yes == 0 && $permissions_no > 0
+    } elseif (!manager()->isAdmin() && $permissions_yes == 0 && $permissions_no > 0
         && (
             sessionv('mgrPermissions.access_permissions') == 1
             ||
@@ -134,10 +134,10 @@ if (evo()->input_any('pid')) {
     $template = str_replace('<input type="hidden" name="pid" value="[+pid+]" />', '', $template);
 }
 $ph = collect_template_ph(
-    request_intvar('id')
-    , $OnDocFormPrerender
-    , $OnDocFormRender
-    , $OnRichTextEditorInit
+    request_intvar('id'),
+    $OnDocFormPrerender,
+    $OnDocFormRender,
+    $OnRichTextEditorInit
 );
 $ph['content'] = implode("\n", $body);
 echo parseText($template, $ph);
